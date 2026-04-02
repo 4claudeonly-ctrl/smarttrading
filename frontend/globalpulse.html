@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SmartTrading — Global Pulse</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0B0D12;--surface:#161B25;--surface2:#1E2636;--border:#252D3D;--border2:#2E3A50;--buy:#00C896;--hold:#F5A623;--sell:#FF4455;--text:#EDF2FF;--muted:#8B95A8;--dim:#4A5568;--mono:'JetBrains Mono','Courier New',monospace;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;max-width:430px;margin:0 auto;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+.logo{font-size:15px;font-weight:600;letter-spacing:1px;}.logo span{color:var(--buy);}
+.section{padding:14px 16px;}
+.section-label{font-size:10px;font-weight:500;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;}
+.crypto-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.crypto-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.cc-symbol{font-family:var(--mono);font-size:13px;font-weight:700;margin-bottom:4px;}
+.cc-price{font-family:var(--mono);font-size:18px;font-weight:600;}
+.cc-chg{font-size:11px;margin-top:3px;font-family:var(--mono);}
+.cc-dom{font-size:10px;color:var(--dim);margin-top:5px;}
+.pos{color:var(--buy);}.neg{color:var(--sell);}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">SMART<span>TRADING</span></div>
+  <div style="font-size:12px;color:var(--muted);">Global Pulse</div>
+</div>
+<div class="section">
+  <div class="section-label">Kripto Utama</div>
+  <div class="crypto-grid">
+    <div class="crypto-card">
+      <div class="cc-symbol">BTC/USD</div>
+      <div class="cc-price pos">$82.450</div>
+      <div class="cc-chg pos">+1.8% (24j)</div>
+      <div class="cc-dom">Dominasi: 54.2%</div>
+    </div>
+    <div class="crypto-card">
+      <div class="cc-symbol">ETH/USD</div>
+      <div class="cc-price neg">$3.180</div>
+      <div class="cc-chg neg">-0.4% (24j)</div>
+      <div class="cc-dom">Gas: 18 Gwei</div>
+    </div>
+  </div>
+</div>
+
+.whale-section{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+.whale-row{display:flex;justify-content:space-between;padding:3px 0;font-size:11px;}
+.whale-key{color:var(--muted);}
+.whale-val{font-family:var(--mono);}
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;padding:14px 0 6px;}
+.gauge-value{font-family:var(--mono);font-size:32px;font-weight:700;margin-top:-6px;}
+.gauge-sublabel{font-size:12px;color:var(--muted);margin-top:4px;}
+.gauge-scale{display:flex;justify-content:space-between;width:220px;margin-top:8px;}
+.gauge-scale span{font-size:9px;color:var(--dim);font-family:var(--mono);}
+.fg-desc{font-size:12px;color:#C8D4E8;line-height:1.65;text-align:center;padding:8px 12px 4px;}
+.event-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;}
+.event-head{display:flex;align-items:center;gap:8px;padding:10px 14px;}
+.event-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.event-type-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;}
+.event-title{font-size:12px;font-weight:500;flex:1;}
+.event-body{padding:0 14px 10px;}
+.event-impact{font-size:11px;color:var(--muted);line-height:1.55;margin-bottom:7px;}
+.sector-tags{display:flex;gap:5px;flex-wrap:wrap;}
+.stag{font-size:10px;padding:2px 7px;border-radius:3px;}
+.pos-tag{background:#0A2E22;color:var(--buy);}
+.neg-tag{background:#2E0A0D;color:var(--sell);}
+.neu-tag{background:#1E1500;color:var(--hold);}
+.news-item{padding:9px 0;border-bottom:1px solid #1E2535;}
+.news-item:last-child{border-bottom:none;}
+.news-meta{display:flex;justify-content:space-between;margin-bottom:4px;}
+.news-src{font-size:10px;color:var(--muted);}
+.news-sent{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:600;}
+.news-title-text{font-size:12px;color:#C8D4E8;line-height:1.5;}
+.news-time{font-size:10px;color:var(--dim);font-family:var(--mono);margin-top:3px;}
+.sent-bar{display:flex;gap:2px;height:6px;border-radius:3px;overflow:hidden;margin:10px 0 6px;}
+.nav-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:20;}
+.nav-item{flex:1;padding:10px 0;text-align:center;font-size:10px;color:var(--muted);text-decoration:none;cursor:pointer;}
+.nav-item.active{color:var(--buy);}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">SMART<span>TRADING</span></div>
+  <div style="font-size:12px;color:var(--muted);">Global Pulse</div>
+</div>
+
+<div class="section">
+  <div class="section-label">Kripto Utama — BTC & ETH</div>
+  <div class="crypto-grid">
+    <div class="crypto-card">
+      <div class="cc-symbol pos">BTC/USD</div>
+      <div class="cc-price pos">$82.340</div>
+      <div class="cc-chg pos">+2.14% hari ini</div>
+      <div class="cc-dom">Dominasi: 54.2%</div>
+      <div class="whale-section">
+        <div class="section-label" style="margin-bottom:5px;">Whale Activity</div>
+        <div class="whale-row"><span class="whale-key">Tx besar (&gt;100 BTC)</span><span class="whale-val pos">47 tx</span></div>
+        <div class="whale-row"><span class="whale-key">Exchange inflow</span><span class="whale-val neg">+2.840 BTC</span></div>
+        <div class="whale-row"><span class="whale-key">Sinyal</span><span class="whale-val" style="color:var(--hold);">Netral</span></div>
+      </div>
+    </div>
+    <div class="crypto-card">
+      <div class="cc-symbol neg">ETH/USD</div>
+      <div class="cc-price neg">$1.812</div>
+      <div class="cc-chg neg">-1.38% hari ini</div>
+      <div class="cc-dom">Gas: 18 Gwei</div>
+      <div class="whale-section">
+        <div class="section-label" style="margin-bottom:5px;">Whale Activity</div>
+        <div class="whale-row"><span class="whale-key">Tx besar (&gt;500 ETH)</span><span class="whale-val neg">31 tx</span></div>
+        <div class="whale-row"><span class="whale-key">Exchange inflow</span><span class="whale-val neg">+18.400 ETH</span></div>
+        <div class="whale-row"><span class="whale-key">Sinyal</span><span class="whale-val neg">Jual</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label">Fear &amp; Greed Index</div>
+  <div class="card" style="padding:0 14px 14px;">
+    <div class="gauge-wrap">
+      <svg width="220" height="120" viewBox="0 0 220 120">
+        <defs>
+          <linearGradient id="gGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#FF4455"/>
+            <stop offset="50%" stop-color="#F5A623"/>
+            <stop offset="100%" stop-color="#00C896"/>
+          </linearGradient>
+        </defs>
+        <path d="M 20 110 A 90 90 0 0 1 200 110" fill="none" stroke="#252D3D" stroke-width="16" stroke-linecap="round"/>
+        <path d="M 20 110 A 90 90 0 0 1 200 110" fill="none" stroke="url(#gGrad)" stroke-width="16" stroke-linecap="round"
+          stroke-dasharray="283" stroke-dashoffset="142"/>
+        <line x1="110" y1="110" x2="110" y2="30" stroke="#EDF2FF" stroke-width="3" stroke-linecap="round"
+          transform="rotate(-36, 110, 110)"/>
+        <circle cx="110" cy="110" r="6" fill="#EDF2FF"/>
+      </svg>
+      <div class="gauge-value" style="color:#FF8C42;">47</div>
+      <div class="gauge-sublabel">Fear — Pasar dalam tekanan</div>
+      <div class="gauge-scale">
+        <span>Extreme Fear</span><span>Neutral</span><span>Extreme Greed</span>
+      </div>
+    </div>
+    <div class="fg-desc">Skor 47 di zona Fear ringan. Historis, zona ini sering mendahului pemulihan bertahap jika tidak ada trigger negatif baru.</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label">Events Makro Aktif</div>
+  <div class="event-card">
+    <div class="event-head">
+      <div class="event-dot" style="background:#FF4455;"></div>
+      <span class="event-type-tag" style="background:#2E0A0D;color:#FF4455;">FED_RATE_HOLD</span>
+      <div class="event-title">Fed tahan suku bunga 5.25–5.50%</div>
+    </div>
+    <div class="event-body">
+      <div class="event-impact">Fed menahan suku bunga, sinyal belum ada pemangkasan di Q2. Rupiah berpotensi tertekan.</div>
+      <div class="sector-tags">
+        <span class="stag neg-tag">Properti: Negatif</span>
+        <span class="stag neg-tag">Perbankan: Negatif</span>
+        <span class="stag pos-tag">Emas: Positif</span>
+      </div>
+    </div>
+  </div>
+  <div class="event-card">
+    <div class="event-head">
+      <div class="event-dot" style="background:#F5A623;"></div>
+      <span class="event-type-tag" style="background:#1E1500;color:#F5A623;">RUPIAH_WEAKENS</span>
+      <div class="event-title">USD/IDR ke Rp 16.340</div>
+    </div>
+    <div class="event-body">
+      <div class="event-impact">Rupiah terlemah 3 bulan. Emiten ekspor untung, importir bahan baku tertekan.</div>
+      <div class="sector-tags">
+        <span class="stag pos-tag">Batu Bara: Positif</span>
+        <span class="stag pos-tag">CPO: Positif</span>
+        <span class="stag neg-tag">Consumer: Negatif</span>
+      </div>
+    </div>
+  </div>
+  <div class="event-card">
+    <div class="event-head">
+      <div class="event-dot" style="background:#00C896;"></div>
+      <span class="event-type-tag" style="background:#0A2E22;color:#00C896;">CHINA_STIMULUS</span>
+      <div class="event-title">China stimulus infrastruktur CNY 1T</div>
+    </div>
+    <div class="event-body">
+      <div class="event-impact">Permintaan nikel, batu bara, CPO Indonesia berpotensi meningkat 2–4 kuartal ke depan.</div>
+      <div class="sector-tags">
+        <span class="stag pos-tag">Nikel: Positif</span>
+        <span class="stag pos-tag">Batu Bara: Positif</span>
+        <span class="stag neu-tag">Manufaktur: Netral</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="padding-bottom:80px;">
+  <div class="section-label">Berita Global — Sentimen Hari Ini</div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <span style="font-size:11px;color:var(--muted);">24 artikel dianalisis</span>
+      <span style="font-size:10px;font-family:var(--mono);color:var(--muted);">POS 46% · NEU 29% · NEG 25%</span>
+    </div>
+    <div class="sent-bar">
+      <div style="flex:46;background:#00C896;"></div>
+      <div style="flex:29;background:#F5A623;"></div>
+      <div style="flex:25;background:#FF4455;"></div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:4px;">
+      <div class="news-item">
+        <div class="news-meta">
+          <span class="news-src">Reuters</span>
+          <span class="news-sent" style="background:#0A2E22;color:#00C896;">Positif</span>
+        </div>
+        <div class="news-title-text">China's infrastructure spending to boost commodity demand across Southeast Asia</div>
+        <div class="news-time">14:30 WIB</div>
+      </div>
+      <div class="news-item">
+        <div class="news-meta">
+          <span class="news-src">Bloomberg</span>
+          <span class="news-sent" style="background:#2E0A0D;color:#FF4455;">Negatif</span>
+        </div>
+        <div class="news-title-text">Fed officials signal no rate cuts before Q3 as inflation remains sticky</div>
+        <div class="news-time">12:15 WIB</div>
+      </div>
+      <div class="news-item">
+        <div class="news-meta">
+          <span class="news-src">Kontan</span>
+          <span class="news-sent" style="background:#1E1500;color:#F5A623;">Netral</span>
+        </div>
+        <div class="news-title-text">BI pantau pergerakan rupiah, intervensi dilakukan bila diperlukan</div>
+        <div class="news-time">11:45 WIB</div>
+      </div>
+      <div class="news-item">
+        <div class="news-meta">
+          <span class="news-src">CNBC Indonesia</span>
+          <span class="news-sent" style="background:#0A2E22;color:#00C896;">Positif</span>
+        </div>
+        <div class="news-title-text">Harga nikel naik 3% setelah data produksi EV China melampaui estimasi</div>
+        <div class="news-time">10:20 WIB</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav class="nav-bar">
+  <a class="nav-item" href="home.html">Home</a>
+  <a class="nav-item" href="watchlist.html">Watchlist</a>
+  <a class="nav-item" href="deepdive.html">Deep Dive</a>
+  <a class="nav-item active" href="globalpulse.html">Global</a>
+  <a class="nav-item" href="alert.html">Alert</a>
+</nav>
+</body>
+</html>

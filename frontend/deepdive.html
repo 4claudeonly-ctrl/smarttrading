@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SmartTrading — Deep Dive</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0B0D12;--surface:#161B25;--surface2:#1E2636;--border:#252D3D;--border2:#2E3A50;--buy:#00C896;--hold:#F5A623;--sell:#FF4455;--text:#EDF2FF;--muted:#8B95A8;--dim:#4A5568;--mono:'JetBrains Mono','Courier New',monospace;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;max-width:430px;margin:0 auto;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;position:sticky;top:0;z-index:10;}
+.logo{font-size:15px;font-weight:600;letter-spacing:1px;}.logo span{color:var(--buy);}
+.search-row{display:flex;gap:8px;margin-top:10px;}
+.search-input{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 14px;color:var(--text);font-size:13px;outline:none;font-family:var(--mono);}
+.search-input::placeholder{color:var(--dim);}
+.search-input:focus{border-color:var(--buy);}
+.search-btn{background:var(--buy);border:none;border-radius:8px;padding:9px 16px;color:#0B0D12;font-weight:600;cursor:pointer;font-size:13px;}
+.ticker-chips{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.chip{padding:4px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:16px;font-size:11px;font-family:var(--mono);color:var(--muted);cursor:pointer;}
+.chip:hover{border-color:var(--buy);color:var(--buy);}
+.chip.active{background:rgba(0,200,150,0.12);border-color:var(--buy);color:var(--buy);}
+.section{padding:14px 16px;}
+.section-label{font-size:10px;font-weight:500;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">SMART<span>TRADING</span></div>
+  <div class="search-row">
+    <input class="search-input" id="search" placeholder="Ketik kode saham... BBCA" oninput="filterSearch(this.value)" />
+    <button class="search-btn">Cari</button>
+  </div>
+  <div class="ticker-chips">
+    <div class="chip active" onclick="selectTicker('BBCA',this)">BBCA</div>
+    <div class="chip" onclick="selectTicker('TLKM',this)">TLKM</div>
+    <div class="chip" onclick="selectTicker('ASII',this)">ASII</div>
+    <div class="chip" onclick="selectTicker('BRIS',this)">BRIS</div>
+    <div class="chip" onclick="selectTicker('BMRI',this)">BMRI</div>
+  </div>
+</div>
+
+<style>
+.profile-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;}
+.pc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.pc-ticker-big{font-family:var(--mono);font-size:22px;font-weight:700;}
+.pc-name-full{font-size:12px;color:var(--muted);}
+.pc-signal{text-align:right;}
+.pc-badge{font-size:12px;font-weight:600;padding:4px 12px;border-radius:12px;}
+.b-buy{background:rgba(0,200,150,0.15);color:#00C896;}
+.b-hold{background:rgba(245,166,35,0.15);color:#F5A623;}
+.pc-price{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px;}
+.pc-narasi{font-size:12px;color:var(--muted);line-height:1.6;padding:10px 0;border-top:1px solid var(--border);}
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;}
+.chart-title{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.chart-bars{display:flex;align-items:flex-end;gap:3px;height:72px;}
+.bar{flex:1;border-radius:2px 2px 0 0;min-height:4px;}
+.bar-pos{background:rgba(0,200,150,0.7);}
+.bar-neg{background:rgba(255,68,85,0.6);}
+.chart-labels{display:flex;justify-content:space-between;margin-top:4px;}
+.chart-lbl{font-size:9px;color:var(--dim);}
+.targets-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;}
+.target-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+.tg-label{font-size:10px;color:var(--dim);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px;}
+.tg-val{font-family:var(--mono);font-size:16px;font-weight:600;}
+.tg-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.risk-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);}
+.risk-row:last-child{border-bottom:none;}
+.risk-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.risk-text{font-size:12px;color:var(--muted);flex:1;line-height:1.45;}
+.risk-lvl{font-size:10px;font-weight:500;flex-shrink:0;}
+.risk-high{color:var(--sell);}
+.risk-med{color:var(--hold);}
+.risk-low{color:var(--buy);}
+.cta-btn{width:100%;padding:12px;background:rgba(0,200,150,0.12);border:1px solid rgba(0,200,150,0.4);border-radius:8px;color:var(--buy);font-size:13px;font-weight:600;cursor:pointer;margin-top:4px;letter-spacing:0.5px;}
+.cta-btn:hover{background:rgba(0,200,150,0.2);}
+.nav-bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);display:flex;}
+.nav-item{flex:1;padding:10px 0;text-align:center;font-size:10px;color:var(--dim);cursor:pointer;letter-spacing:0.5px;}
+.nav-item.active{color:var(--buy);}
+.nav-icon{font-size:18px;display:block;margin-bottom:2px;}
+</style>
+<div class="section" id="content">
+  <div class="profile-card">
+    <div class="pc-header">
+      <div><div class="pc-ticker-big" id="dd-ticker">BBCA</div><div class="pc-name-full" id="dd-name">Bank Central Asia Tbk.</div></div>
+      <div class="pc-signal"><div class="pc-badge b-buy" id="dd-badge">BELI</div><div class="pc-price" id="dd-price">Rp 9.425</div></div>
+    </div>
+    <div class="pc-narasi" id="dd-narasi">BBCA adalah bank swasta terbesar di Indonesia dengan fundamental kuat dan ROE konsisten di atas 20%. Saat ini sedang dalam fase ekspansi layanan digital. Secara teknikal baru break resistance penting di 9.400 dengan volume 2x rata-rata, menandakan minat institusi menguat.</div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">Kinerja Sinyal 12 Bulan (WIN/LOSS)</div>
+    <div class="chart-bars" id="chart-bars"></div>
+    <div class="chart-labels">
+      <span class="chart-lbl">Apr'25</span>
+      <span class="chart-lbl">Jul'25</span>
+      <span class="chart-lbl">Okt'25</span>
+      <span class="chart-lbl">Jan'26</span>
+    </div>
+  </div>
+
+  <div class="targets-grid">
+    <div class="target-card"><div class="tg-label">Target Konservatif</div><div class="tg-val" style="color:var(--buy)">Rp 9.700</div><div class="tg-sub">+2.9% dari harga kini</div></div>
+    <div class="target-card"><div class="tg-label">Target Moderat</div><div class="tg-val" style="color:var(--buy)">Rp 10.200</div><div class="tg-sub">+8.2% dari harga kini</div></div>
+    <div class="target-card"><div class="tg-label">Stop Loss</div><div class="tg-val" style="color:var(--sell)">Rp 9.100</div><div class="tg-sub">-3.4% dari harga kini</div></div>
+    <div class="target-card"><div class="tg-label">Keyakinan AI</div><div class="tg-val" style="color:var(--buy)">Tinggi</div><div class="tg-sub">82% dari threshold 70%</div></div>
+  </div>
+
+  <div class="section-label" style="padding:0 0 8px;">Risiko yang Perlu Diperhatikan</div>
+  <div class="profile-card" style="padding:10px 14px;">
+    <div class="risk-row"><div class="risk-dot" style="background:var(--sell);"></div><div class="risk-text">Kenaikan BI Rate yang tidak terduga dapat menekan margin bunga bersih</div><div class="risk-lvl risk-high">Tinggi</div></div>
+    <div class="risk-row"><div class="risk-dot" style="background:var(--hold);"></div><div class="risk-text">Pelemahan rupiah meningkatkan biaya dana valuta asing</div><div class="risk-lvl risk-med">Sedang</div></div>
+    <div class="risk-row"><div class="risk-dot" style="background:var(--buy);"></div><div class="risk-text">Kompetisi dari bank digital masih dapat dikelola jangka pendek</div><div class="risk-lvl risk-low">Rendah</div></div>
+  </div>
+
+  <button class="cta-btn" onclick="copySummary()">&#128203; Salin Ringkasan untuk Broker</button>
+</div>
+
+<div style="height:64px;"></div>
+<div class="nav-bottom">
+  <div class="nav-item" onclick="location.href='home.html'"><span class="nav-icon">&#8962;</span>Home</div>
+  <div class="nav-item" onclick="location.href='watchlist.html'"><span class="nav-icon">&#9776;</span>Watchlist</div>
+  <div class="nav-item active"><span class="nav-icon">&#9740;</span>Deep Dive</div>
+  <div class="nav-item" onclick="location.href='globalpulse.html'"><span class="nav-icon">&#127758;</span>Global</div>
+  <div class="nav-item" onclick="location.href='alert.html'"><span class="nav-icon">&#9888;</span>Alert</div>
+</div>
+
+<script>
+const data={
+  BBCA:{name:'Bank Central Asia Tbk.',badge:'BELI',badgeClass:'b-buy',price:'Rp 9.425',narasi:'BBCA adalah bank swasta terbesar di Indonesia dengan fundamental kuat dan ROE konsisten di atas 20%. Break resistance 9.400 dengan volume 2x rata-rata menandakan minat institusi menguat.',bars:[60,45,70,80,55,65,75,40,85,70,60,90]},
+  TLKM:{name:'Telkom Indonesia Tbk.',badge:'TAHAN',badgeClass:'b-hold',price:'Rp 3.210',narasi:'TLKM bergerak sideways di area support 3.200. Fundamental masih solid didukung dividen rutin, namun sentimen jangka pendek tertekan oleh kompetisi seluler. Tunggu konfirmasi arah.',bars:[55,60,40,50,65,45,55,70,50,45,55,60]},
+  ASII:{name:'Astra International Tbk.',badge:'TAHAN',badgeClass:'b-hold',price:'Rp 5.750',narasi:'ASII berkonsolidasi di zona 5.600-5.800. Kinerja otomotif masih kuat meski ada tekanan dari rupiah. Harga saat ini masih menarik untuk posisi jangka menengah.',bars:[70,65,80,60,55,75,65,55,70,60,65,75]},
+  BRIS:{name:'Bank Syariah Indonesia Tbk.',badge:'BELI',badgeClass:'b-buy',price:'Rp 2.410',narasi:'Sentimen sektor bank syariah menguat pasca kebijakan BI. BRIS di harga menarik dengan siklus kredit yang masih ekspansif dan dukungan pemegang saham strategis.',bars:[50,65,75,60,70,80,65,75,85,70,80,90]},
+  BMRI:{name:'Bank Mandiri Tbk.',badge:'BELI',badgeClass:'b-buy',price:'Rp 5.580',narasi:'BMRI memiliki fundamental solid dengan NIM yang stabil. Volume beli meningkat 3 hari terakhir, sinyal akumulasi institusi. Potensi upside 5-7% dalam 2-4 minggu.',bars:[65,70,60,75,80,70,85,75,80,85,75,90]},
+};
+function renderBars(arr){
+  const max=Math.max(...arr);
+  return arr.map(v=>{
+    const h=Math.round((v/max)*68);
+    const cls=v>55?'bar-pos':'bar-neg';
+    return `<div class="bar ${cls}" style="height:${h}px;"></div>`;
+  }).join('');
+}
+function selectTicker(t,el){
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  const d=data[t];
+  if(!d)return;
+  document.getElementById('dd-ticker').textContent=t;
+  document.getElementById('dd-name').textContent=d.name;
+  document.getElementById('dd-badge').textContent=d.badge;
+  document.getElementById('dd-badge').className='pc-badge '+d.badgeClass;
+  document.getElementById('dd-price').textContent=d.price;
+  document.getElementById('dd-narasi').textContent=d.narasi;
+  document.getElementById('chart-bars').innerHTML=renderBars(d.bars);
+}
+function filterSearch(v){}
+function copySummary(){
+  const t=document.getElementById('dd-ticker').textContent;
+  const n=document.getElementById('dd-narasi').textContent;
+  const txt=`[SmartTrading AI — ${new Date().toLocaleDateString('id-ID')}]\nSaham: ${t}\n${n}\n\nDihasilkan oleh SmartTrading. Bukan rekomendasi investasi — eksekusi di platform broker Anda.`;
+  navigator.clipboard.writeText(txt).then(()=>alert('Ringkasan disalin!'));
+}
+document.getElementById('chart-bars').innerHTML=renderBars(data.BBCA.bars);
+</script>
+</body>
+</html>

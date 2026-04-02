@@ -1,0 +1,56 @@
+:root {
+  --bg:       #0B0D12;
+  --surface:  #161B25;
+  --surface2: #1E2636;
+  --border:   #252D3D;
+  --border2:  #2E3A50;
+  --buy:      #00C896;
+  --hold:     #F5A623;
+  --sell:     #FF4455;
+  --text:     #EDF2FF;
+  --muted:    #8B95A8;
+  --dim:      #4A5568;
+  --mono:     'JetBrains Mono', 'Courier New', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+}
+
+a { text-decoration: none; color: inherit; }
+
+.mono { font-family: var(--mono); }
+.up   { color: var(--buy);  }
+.dn   { color: var(--sell); }
+.nt   { color: var(--hold); }
+
+.section-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.2px;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  border-left: 2px solid var(--buy);
+  padding-left: 8px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+
+.badge-buy  { background: #0A2E22; color: #00C896; }
+.badge-hold { background: #1E1500; color: #F5A623; }
+.badge-sell { background: #2E0A0D; color: #FF4455; }

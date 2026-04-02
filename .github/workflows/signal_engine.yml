@@ -1,0 +1,73 @@
+# ================================================================
+# signal_engine.yml — SmartTrading Core Signal Workflow
+# ================================================================
+# Jadwal: setiap 15 menit, Senin-Jumat, jam 02:00-08:30 UTC
+#         (= 09:00-15:30 WIB, market hours BEI)
+#
+# CATATAN PENTING:
+#   - GitHub Actions cron pakai UTC. WIB = UTC+7.
+#   - 09:00 WIB = 02:00 UTC | 15:30 WIB = 08:30 UTC
+#   - is_market_open() di Python tetap jadi safety check ke-2
+#   - Workflow ini trigger, Python yang putuskan jalan atau tidak
+# ================================================================
+
+name: "Signal Engine — Core BUY/HOLD/SELL"
+
+on:
+  schedule:
+    # Setiap 15 menit, Senin-Jumat, 02:00-08:45 UTC (09:00-15:45 WIB)
+    - cron: "0,15,30,45 2-8 * * 1-5"
+  workflow_dispatch:
+    # Bisa dijalankan manual dari GitHub Actions tab
+    inputs:
+      ticker_override:
+        description: "Ticker spesifik (kosong = semua aktif, contoh: BBCA,TLKM)"
+        required: false
+        default: ""
+      dry_run:
+        description: "Dry run — tidak insert ke DB"
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  run-signal-engine:
+    name: "Run Signal Engine"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10    # kill job jika > 10 menit (safety)
+
+    steps:
+      # ── 1. Checkout repo ──────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Setup Python 3.11 ──────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"           # cache pip dependencies antar run
+
+      # ── 3. Install dependencies ───────────────────────────
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # ── 4. Jalankan signal engine ─────────────────────────
+      - name: Run signal engine
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          GROQ_API_KEY:         ${{ secrets.GROQ_API_KEY }}
+          TICKER_OVERRIDE:      ${{ inputs.ticker_override }}
+          DRY_RUN:              ${{ inputs.dry_run }}
+        run: python signal_engine.py
+
+      # ── 5. Upload log sebagai artifact (3 hari retensi) ───
+      - name: Upload run log
+        if: always()    # upload bahkan jika step sebelumnya gagal
+        uses: actions/upload-artifact@v4
+        with:
+          name: signal-log-${{ github.run_id }}
+          path: "*.log"
+          retention-days: 3
+          if-no-files-found: ignore

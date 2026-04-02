@@ -1,0 +1,58 @@
+# ================================================================
+# cleanup.yml — SmartTrading Database Cleanup Workflow
+# ================================================================
+# Jadwal: sekali sehari, jam 09:00 UTC (16:00 WIB, setelah market tutup)
+# Tugas:
+#   1. Hapus news_cache yang sudah expired (> 24 jam)
+#   2. Evaluasi signal yang expired -> update signal_history (WIN/LOSS/NEUTRAL)
+#   3. Hapus signals lama > 7 hari (hemat storage Supabase free 500MB)
+# ================================================================
+
+name: "Daily Cleanup + Signal Evaluation"
+
+on:
+  schedule:
+    # Setiap hari jam 09:00 UTC = 16:00 WIB (30 menit setelah market tutup)
+    - cron: "0 9 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run — tampilkan yang akan dihapus tapi tidak eksekusi"
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  cleanup-and-evaluate:
+    name: "Cleanup DB + Evaluate Signals"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run cleanup + signal evaluation
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          DRY_RUN:              ${{ inputs.dry_run }}
+        run: python cleanup.py
+
+      - name: Upload cleanup report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cleanup-report-${{ github.run_id }}
+          path: "*.log"
+          retention-days: 7
+          if-no-files-found: ignore

@@ -1,0 +1,12 @@
+# SmartTrading — Python Dependencies
+# Install: pip install -r requirements.txt
+
+yfinance>=0.2.40
+pandas>=2.0.0
+pandas-ta>=0.3.14b0
+requests>=2.31.0
+supabase>=2.3.0
+python-dotenv>=1.0.0
+# news_fetcher.py — RSS parsing pakai stdlib (xml.etree, email.utils)
+# dateutil untuk robust RSS date parsing
+python-dateutil>=2.9.0

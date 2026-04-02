@@ -1,0 +1,57 @@
+# ================================================================
+# news_fetcher.yml — SmartTrading News Cache Workflow
+# ================================================================
+# Jadwal: setiap 30 menit, Senin-Jumat, jam market hours
+#         + sekali pagi (08:45 UTC = 15:45 WIB, sesaat sebelum market tutup)
+# Source: Google News RSS per ticker LQ45 + headline global
+# Output: INSERT ke tabel news_cache di Supabase
+# ================================================================
+
+name: "News Fetcher — RSS + Sentiment"
+
+on:
+  schedule:
+    # Setiap 30 menit, Senin-Jumat, 02:00-08:30 UTC
+    - cron: "0,30 2-8 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      ticker_override:
+        description: "Ticker spesifik (kosong = LQ45 semua)"
+        required: false
+        default: ""
+
+jobs:
+  fetch-news:
+    name: "Fetch & Cache News"
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch news RSS + analyze sentiment
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          GROQ_API_KEY:         ${{ secrets.GROQ_API_KEY }}
+          TICKER_OVERRIDE:      ${{ inputs.ticker_override }}
+        run: python news_fetcher.py
+
+      - name: Upload run log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: news-log-${{ github.run_id }}
+          path: "*.log"
+          retention-days: 2
+          if-no-files-found: ignore

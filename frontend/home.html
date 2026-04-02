@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SmartTrading — Home</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0B0D12;--surface:#161B25;--surface2:#1E2636;--border:#252D3D;--border2:#2E3A50;
+  --buy:#00C896;--hold:#F5A623;--sell:#FF4455;
+  --text:#EDF2FF;--muted:#8B95A8;--dim:#4A5568;
+  --mono:'JetBrains Mono','Courier New',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;max-width:430px;margin:0 auto;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+.logo{font-size:15px;font-weight:600;letter-spacing:1px;}
+.logo span{color:var(--buy);}
+.time-badge{font-family:var(--mono);font-size:10px;color:var(--muted);background:var(--surface2);padding:3px 8px;border-radius:10px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">SMART<span>TRADING</span></div>
+  <div class="time-badge">IDX OPEN 09:15</div>
+</div>
+
+<!-- MARKET PULSE SECTION -->
+<style>
+.section{padding:14px 16px;}
+.section-label{font-size:10px;font-weight:500;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;}
+.pulse-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.pulse-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;}
+.pulse-val{font-family:var(--mono);font-size:17px;font-weight:600;}
+.pulse-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+.pulse-chg{font-family:var(--mono);font-size:11px;margin-top:3px;}
+.pos{color:var(--buy);}
+.neg{color:var(--sell);}
+.defense-banner{background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.35);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;}
+.def-icon{font-size:18px;margin-top:1px;}
+.def-title{font-size:12px;font-weight:500;color:var(--hold);margin-bottom:3px;}
+.def-body{font-size:12px;color:var(--muted);line-height:1.5;}
+</style>
+<div class="section">
+  <div class="section-label">Market Pulse</div>
+  <div class="pulse-grid">
+    <div class="pulse-card">
+      <div class="pulse-val pos">7.241</div>
+      <div class="pulse-lbl">IHSG</div>
+      <div class="pulse-chg pos">+0.42%</div>
+    </div>
+    <div class="pulse-card">
+      <div class="pulse-val neg">16.248</div>
+      <div class="pulse-lbl">USD/IDR</div>
+      <div class="pulse-chg neg">+0.18%</div>
+    </div>
+    <div class="pulse-card">
+      <div class="pulse-val pos">2.318</div>
+      <div class="pulse-lbl">LQ45</div>
+      <div class="pulse-chg pos">+0.55%</div>
+    </div>
+  </div>
+  <div class="defense-banner">
+    <div class="def-icon">&#9888;</div>
+    <div>
+      <div class="def-title">Kondisi Pasar: Waspada</div>
+      <div class="def-body">Rupiah melemah + volume tipis. Perhatikan posisi terbuka dan hindari tambah eksposur baru hari ini.</div>
+    </div>
+  </div>
+</div>
+
+<!-- TOP PICKS + SIGNAL CARDS -->
+<style>
+.signal-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s;}
+.signal-card:hover{border-color:var(--border2);}
+.sc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.sc-ticker{font-family:var(--mono);font-size:14px;font-weight:700;}
+.sc-name{font-size:11px;color:var(--muted);margin-top:1px;}
+.sc-badge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:12px;letter-spacing:0.5px;}
+.badge-buy{background:rgba(0,200,150,0.15);color:var(--buy);}
+.badge-hold{background:rgba(245,166,35,0.15);color:var(--hold);}
+.badge-sell{background:rgba(255,68,85,0.15);color:var(--sell);}
+.sc-narasi{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:8px;}
+.sc-bottom{display:flex;justify-content:space-between;align-items:center;}
+.conf-bar{display:flex;align-items:center;gap:6px;}
+.conf-bg{width:80px;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;}
+.conf-fill{height:100%;border-radius:2px;}
+.conf-lbl{font-size:10px;color:var(--muted);}
+.price-info{font-family:var(--mono);font-size:11px;color:var(--muted);}
+.price-info span{color:var(--text);}
+.nav-bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);display:flex;}
+.nav-item{flex:1;padding:10px 0;text-align:center;font-size:10px;color:var(--dim);cursor:pointer;letter-spacing:0.5px;}
+.nav-item.active{color:var(--buy);}
+.nav-icon{font-size:18px;display:block;margin-bottom:2px;}
+</style>
+<div class="section">
+  <div class="section-label">Top Picks Hari Ini</div>
+
+  <div class="signal-card" onclick="location.href='deepdive.html'">
+    <div class="sc-top">
+      <div><div class="sc-ticker">BBCA</div><div class="sc-name">Bank Central Asia</div></div>
+      <span class="sc-badge badge-buy">BELI</span>
+    </div>
+    <div class="sc-narasi">BBCA baru saja break resistance 9.400 dengan volume 2x rata-rata — menandakan minat institusi menguat. Momentum jangka pendek positif.</div>
+    <div class="sc-bottom">
+      <div class="conf-bar"><div class="conf-bg"><div class="conf-fill" style="width:82%;background:var(--buy);"></div></div><span class="conf-lbl">Keyakinan Tinggi</span></div>
+      <div class="price-info">Harga <span>9.425</span></div>
+    </div>
+  </div>
+
+  <div class="signal-card">
+    <div class="sc-top">
+      <div><div class="sc-ticker">TLKM</div><div class="sc-name">Telkom Indonesia</div></div>
+      <span class="sc-badge badge-hold">TAHAN</span>
+    </div>
+    <div class="sc-narasi">TLKM bergerak sideways di area support 3.200. Tunggu konfirmasi arah sebelum menambah posisi atau menjual.</div>
+    <div class="sc-bottom">
+      <div class="conf-bar"><div class="conf-bg"><div class="conf-fill" style="width:61%;background:var(--hold);"></div></div><span class="conf-lbl">Keyakinan Sedang</span></div>
+      <div class="price-info">Harga <span>3.210</span></div>
+    </div>
+  </div>
+
+  <div class="signal-card">
+    <div class="sc-top">
+      <div><div class="sc-ticker">BRIS</div><div class="sc-name">Bank Syariah Indonesia</div></div>
+      <span class="sc-badge badge-buy">BELI</span>
+    </div>
+    <div class="sc-narasi">Sentimen sektor bank syariah menguat pasca berita kebijakan BI. BRIS di harga menarik dengan potensi upside 8-10%.</div>
+    <div class="sc-bottom">
+      <div class="conf-bar"><div class="conf-bg"><div class="conf-fill" style="width:75%;background:var(--buy);"></div></div><span class="conf-lbl">Keyakinan Tinggi</span></div>
+      <div class="price-info">Harga <span>2.410</span></div>
+    </div>
+  </div>
+</div>
+
+<div style="height:64px;"></div>
+<div class="nav-bottom">
+  <div class="nav-item active"><span class="nav-icon">&#8962;</span>Home</div>
+  <div class="nav-item" onclick="location.href='watchlist.html'"><span class="nav-icon">&#9776;</span>Watchlist</div>
+  <div class="nav-item" onclick="location.href='deepdive.html'"><span class="nav-icon">&#9740;</span>Deep Dive</div>
+  <div class="nav-item" onclick="location.href='globalpulse.html'"><span class="nav-icon">&#127758;</span>Global</div>
+  <div class="nav-item" onclick="location.href='alert.html'"><span class="nav-icon">&#9888;</span>Alert</div>
+</div>
+</body>
+</html>

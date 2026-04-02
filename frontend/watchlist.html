@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SmartTrading — Watchlist</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0B0D12;--surface:#161B25;--surface2:#1E2636;--border:#252D3D;--border2:#2E3A50;--buy:#00C896;--hold:#F5A623;--sell:#FF4455;--text:#EDF2FF;--muted:#8B95A8;--dim:#4A5568;--mono:'JetBrains Mono','Courier New',monospace;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;max-width:430px;margin:0 auto;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+.logo{font-size:15px;font-weight:600;letter-spacing:1px;}.logo span{color:var(--buy);}
+.section{padding:14px 16px;}
+.section-label{font-size:10px;font-weight:500;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;}
+.pnl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.pnl-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;}
+.pnl-val{font-family:var(--mono);font-size:16px;font-weight:600;}
+.pnl-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+.pos{color:var(--buy);}.neg{color:var(--sell);}
+.warn-box{background:rgba(255,68,85,0.08);border:1px solid rgba(255,68,85,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.5;}
+.warn-title{font-size:12px;font-weight:500;color:var(--sell);margin-bottom:4px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">SMART<span>TRADING</span></div>
+  <div style="font-size:12px;color:var(--muted);">Portofolio Saya</div>
+</div>
+<div class="section">
+  <div class="section-label">Ringkasan P&L</div>
+  <div class="pnl-grid">
+    <div class="pnl-card"><div class="pnl-val pos">+4.2%</div><div class="pnl-lbl">Return MTD</div></div>
+    <div class="pnl-card"><div class="pnl-val pos">+Rp 2.1jt</div><div class="pnl-lbl">Unrealized</div></div>
+    <div class="pnl-card"><div class="pnl-val">4 Pos</div><div class="pnl-lbl">Aktif</div></div>
+  </div>
+  <div class="warn-box">
+    <div class="warn-title">&#9888; Peringatan Diversifikasi</div>
+    60% portofolio terkonsentrasi di sektor Perbankan. Pertimbangkan distribusi ke sektor lain untuk mengurangi risiko.
+  </div>
+</div>
+
+<style>
+.pos-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;}
+.pc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.pc-ticker{font-family:var(--mono);font-size:14px;font-weight:700;}
+.pc-name{font-size:11px;color:var(--muted);}
+.pc-pnl{text-align:right;}
+.pc-pct{font-family:var(--mono);font-size:15px;font-weight:600;}
+.pc-abs{font-size:11px;color:var(--muted);margin-top:1px;}
+.pc-row{display:flex;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);}
+.pc-item{font-size:11px;color:var(--muted);}
+.pc-item span{color:var(--text);font-family:var(--mono);}
+.badge-sm{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:6px;}
+.b-buy{background:rgba(0,200,150,0.15);color:var(--buy);}
+.b-hold{background:rgba(245,166,35,0.15);color:var(--hold);}
+.b-sell{background:rgba(255,68,85,0.15);color:var(--sell);}
+.nav-bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);display:flex;}
+.nav-item{flex:1;padding:10px 0;text-align:center;font-size:10px;color:var(--dim);cursor:pointer;letter-spacing:0.5px;}
+.nav-item.active{color:var(--buy);}
+.nav-icon{font-size:18px;display:block;margin-bottom:2px;}
+</style>
+<div class="section">
+  <div class="section-label">Posisi Aktif</div>
+
+  <div class="pos-card">
+    <div class="pc-top">
+      <div><div class="pc-ticker">BBCA <span class="badge-sm b-buy">BELI</span></div><div class="pc-name">Bank Central Asia</div></div>
+      <div class="pc-pnl"><div class="pc-pct pos">+5.8%</div><div class="pc-abs pos">+Rp 870rb</div></div>
+    </div>
+    <div class="pc-row">
+      <div class="pc-item">Beli di <span>8.900</span></div>
+      <div class="pc-item">Saat ini <span>9.425</span></div>
+      <div class="pc-item">Lot <span>15</span></div>
+    </div>
+  </div>
+
+  <div class="pos-card">
+    <div class="pc-top">
+      <div><div class="pc-ticker">BRIS <span class="badge-sm b-buy">BELI</span></div><div class="pc-name">Bank Syariah Indonesia</div></div>
+      <div class="pc-pnl"><div class="pc-pct pos">+2.1%</div><div class="pc-abs pos">+Rp 220rb</div></div>
+    </div>
+    <div class="pc-row">
+      <div class="pc-item">Beli di <span>2.360</span></div>
+      <div class="pc-item">Saat ini <span>2.410</span></div>
+      <div class="pc-item">Lot <span>10</span></div>
+    </div>
+  </div>
+
+  <div class="pos-card">
+    <div class="pc-top">
+      <div><div class="pc-ticker">TLKM <span class="badge-sm b-hold">TAHAN</span></div><div class="pc-name">Telkom Indonesia</div></div>
+      <div class="pc-pnl"><div class="pc-pct neg">-1.2%</div><div class="pc-abs neg">-Rp 85rb</div></div>
+    </div>
+    <div class="pc-row">
+      <div class="pc-item">Beli di <span>3.250</span></div>
+      <div class="pc-item">Saat ini <span>3.210</span></div>
+      <div class="pc-item">Lot <span>7</span></div>
+    </div>
+  </div>
+
+  <div class="pos-card">
+    <div class="pc-top">
+      <div><div class="pc-ticker">ASII <span class="badge-sm b-hold">TAHAN</span></div><div class="pc-name">Astra International</div></div>
+      <div class="pc-pnl"><div class="pc-pct pos">+0.9%</div><div class="pc-abs pos">+Rp 45rb</div></div>
+    </div>
+    <div class="pc-row">
+      <div class="pc-item">Beli di <span>5.700</span></div>
+      <div class="pc-item">Saat ini <span>5.750</span></div>
+      <div class="pc-item">Lot <span>5</span></div>
+    </div>
+  </div>
+</div>
+
+<div style="height:64px;"></div>
+<div class="nav-bottom">
+  <div class="nav-item" onclick="location.href='home.html'"><span class="nav-icon">&#8962;</span>Home</div>
+  <div class="nav-item active"><span class="nav-icon">&#9776;</span>Watchlist</div>
+  <div class="nav-item" onclick="location.href='deepdive.html'"><span class="nav-icon">&#9740;</span>Deep Dive</div>
+  <div class="nav-item" onclick="location.href='globalpulse.html'"><span class="nav-icon">&#127758;</span>Global</div>
+  <div class="nav-item" onclick="location.href='alert.html'"><span class="nav-icon">&#9888;</span>Alert</div>
+</div>
+</body>
+</html>
