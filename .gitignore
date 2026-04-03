@@ -11,6 +11,7 @@ node_modules/
 dist/
 frontend-react/node_modules/
 frontend-react/dist/
+frontend-react/.env
 frontend-react/.env.local
 
 # Secrets — JANGAN PERNAH COMMIT
