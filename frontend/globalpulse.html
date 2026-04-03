@@ -252,3 +252,156 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 </nav>
 </body>
 </html>
+
+<style>
+.section{padding:14px 16px;}
+.section-label{font-size:10px;font-weight:500;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;}
+.fg-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;text-align:center;}
+.fg-label{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.fg-score{font-family:var(--mono);font-size:28px;font-weight:700;color:var(--hold);}
+.fg-word{font-size:14px;font-weight:500;color:var(--hold);margin-top:2px;}
+.fg-sub{font-size:11px;color:var(--dim);margin-top:6px;}
+.event-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;}
+.event-row{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;}
+.event-row:last-child{border-bottom:none;}
+.event-impact{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;flex-shrink:0;margin-top:1px;letter-spacing:0.4px;}
+.imp-red{background:rgba(255,68,85,0.15);color:var(--sell);}
+.imp-amber{background:rgba(245,166,35,0.15);color:var(--hold);}
+.imp-green{background:rgba(0,200,150,0.15);color:var(--buy);}
+.event-body{flex:1;}
+.event-title{font-size:12px;font-weight:500;margin-bottom:3px;}
+.event-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+.news-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;}
+.news-row{padding:10px 14px;border-bottom:1px solid var(--border);}
+.news-row:last-child{border-bottom:none;}
+.news-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}
+.news-title{font-size:12px;font-weight:500;line-height:1.4;flex:1;margin-right:8px;}
+.news-sent{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;flex-shrink:0;}
+.sent-pos{background:rgba(0,200,150,0.15);color:var(--buy);}
+.sent-neg{background:rgba(255,68,85,0.15);color:var(--sell);}
+.sent-neu{background:rgba(139,149,168,0.15);color:var(--muted);}
+.news-src{font-size:10px;color:var(--dim);}
+.sent-bar-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;}
+.sent-bar-title{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.sent-bar-row{display:flex;gap:3px;height:10px;border-radius:5px;overflow:hidden;margin-bottom:6px;}
+.sb-pos{background:var(--buy);}
+.sb-neu{background:var(--dim);}
+.sb-neg{background:var(--sell);}
+.sent-legend{display:flex;gap:14px;}
+.sl-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);}
+.sl-dot{width:7px;height:7px;border-radius:50%;}
+</style>
+<div class="section">
+  <div class="section-label">Fear &amp; Greed Index</div>
+  <div class="fg-card">
+    <div class="fg-label">Sentimen Pasar Global Hari Ini</div>
+    <svg viewBox="0 0 200 110" width="200" style="display:block;margin:0 auto 8px;">
+      <defs>
+        <linearGradient id="arc-grad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#FF4455"/>
+          <stop offset="50%" stop-color="#F5A623"/>
+          <stop offset="100%" stop-color="#00C896"/>
+        </linearGradient>
+      </defs>
+      <path d="M20,90 A80,80 0 0,1 180,90" fill="none" stroke="#252D3D" stroke-width="14" stroke-linecap="round"/>
+      <path d="M20,90 A80,80 0 0,1 180,90" fill="none" stroke="url(#arc-grad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="0" opacity="0.35"/>
+      <path d="M20,90 A80,80 0 0,1 180,90" fill="none" stroke="url(#arc-grad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="130"/>
+      <line x1="100" y1="90" x2="62" y2="44" stroke="#EDF2FF" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="100" cy="90" r="5" fill="#EDF2FF"/>
+    </svg>
+    <div class="fg-score">47</div>
+    <div class="fg-word">Takut</div>
+    <div class="fg-sub">Kemarin: 51 (Netral) &nbsp;|&nbsp; Minggu lalu: 38 (Sangat Takut)</div>
+  </div>
+</div>
+
+<div class="section" style="padding-top:0;">
+  <div class="section-label">Event Makro</div>
+  <div class="event-card">
+    <div class="event-row">
+      <span class="event-impact imp-amber">SEDANG</span>
+      <div class="event-body">
+        <div class="event-title">FED Tahan Suku Bunga di 5.25%</div>
+        <div class="event-desc">FOMC meeting mempertahankan rate. Pasar menantikan sinyal pemangkasan di Q3 2026. Positif jangka pendek untuk aset risiko.</div>
+      </div>
+    </div>
+    <div class="event-row">
+      <span class="event-impact imp-red">NEGATIF</span>
+      <div class="event-body">
+        <div class="event-title">Rupiah Melemah ke 16.248</div>
+        <div class="event-desc">Tekanan eksternal dari penguatan DXY. BI berpotensi intervensi. Waspadai saham importir dan emiten berutang valas.</div>
+      </div>
+    </div>
+    <div class="event-row">
+      <span class="event-impact imp-green">POSITIF</span>
+      <div class="event-body">
+        <div class="event-title">China Umumkan Stimulus Infrastruktur</div>
+        <div class="event-desc">Paket stimulus USD 150M untuk infrastruktur. Positif untuk sektor komoditas Indonesia: batu bara, nikel, CPO.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Sentimen Berita Global</div>
+  <div class="sent-bar-wrap">
+    <div class="sent-bar-title">Distribusi 48 artikel terakhir</div>
+    <div class="sent-bar-row">
+      <div class="sb-pos" style="width:54%;"></div>
+      <div class="sb-neu" style="width:27%;"></div>
+      <div class="sb-neg" style="width:19%;"></div>
+    </div>
+    <div class="sent-legend">
+      <div class="sl-item"><div class="sl-dot" style="background:var(--buy);"></div>Positif 54%</div>
+      <div class="sl-item"><div class="sl-dot" style="background:var(--dim);"></div>Netral 27%</div>
+      <div class="sl-item"><div class="sl-dot" style="background:var(--sell);"></div>Negatif 19%</div>
+    </div>
+  </div>
+
+  <div class="section-label">Berita Pilihan</div>
+  <div class="news-card">
+    <div class="news-row">
+      <div class="news-head">
+        <div class="news-title">BI Pertahankan Rate 6%, Fokus Stabilitas Rupiah</div>
+        <span class="news-sent sent-neu">NETRAL</span>
+      </div>
+      <div class="news-src">Reuters Indonesia &nbsp;· 2j lalu</div>
+    </div>
+    <div class="news-row">
+      <div class="news-head">
+        <div class="news-title">IHSG Menguat Didukung Sektor Perbankan dan Konsumer</div>
+        <span class="news-sent sent-pos">POSITIF</span>
+      </div>
+      <div class="news-src">Bisnis.com &nbsp;· 3j lalu</div>
+    </div>
+    <div class="news-row">
+      <div class="news-head">
+        <div class="news-title">Harga Minyak Dunia Turun 1.2% Imbas Pasokan AS Meningkat</div>
+        <span class="news-sent sent-neg">NEGATIF</span>
+      </div>
+      <div class="news-src">Bloomberg &nbsp;· 4j lalu</div>
+    </div>
+    <div class="news-row">
+      <div class="news-head">
+        <div class="news-title">BTC Kembali di Atas $82.000 Setelah Koreksi Singkat</div>
+        <span class="news-sent sent-pos">POSITIF</span>
+      </div>
+      <div class="news-src">CoinDesk &nbsp;· 5j lalu</div>
+    </div>
+  </div>
+</div>
+
+<style>
+.nav-bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);display:flex;}
+.nav-item{flex:1;padding:10px 0;text-align:center;font-size:10px;color:var(--dim);cursor:pointer;letter-spacing:0.5px;}
+.nav-item.active{color:var(--buy);}
+.nav-icon{font-size:18px;display:block;margin-bottom:2px;}
+</style>
+<div style="height:64px;"></div>
+<div class="nav-bottom">
+  <div class="nav-item" onclick="location.href='home.html'"><span class="nav-icon">&#8962;</span>Home</div>
+  <div class="nav-item" onclick="location.href='watchlist.html'"><span class="nav-icon">&#9776;</span>Watchlist</div>
+  <div class="nav-item" onclick="location.href='deepdive.html'"><span class="nav-icon">&#9740;</span>Deep Dive</div>
+  <div class="nav-item active"><span class="nav-icon">&#127758;</span>Global</div>
+  <div class="nav-item" onclick="location.href='alert.html'"><span class="nav-icon">&#9888;</span>Alert</div>
+</div>
+</body>
+</html>

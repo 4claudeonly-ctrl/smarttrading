@@ -3,256 +3,162 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SmartTrading — Alert</title>
+<title>SmartTrading — Price Alerts</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0B0D12;--surface:#161B25;--border:#252D3D;--buy:#00C896;--hold:#F5A623;--sell:#FF4455;--text:#EDF2FF;--muted:#8B95A8;--dim:#4A5568;--mono:'JetBrains Mono','Courier New',monospace;}
+:root{--bg:#0B0D12;--surface:#161B25;--surface2:#1E2636;--border:#252D3D;--border2:#2E3A50;--buy:#00C896;--hold:#F5A623;--sell:#FF4455;--text:#EDF2FF;--muted:#8B95A8;--dim:#4A5568;--mono:'JetBrains Mono','Courier New',monospace;}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;max-width:430px;margin:0 auto;}
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
 .logo{font-size:15px;font-weight:600;letter-spacing:1px;}.logo span{color:var(--buy);}
-.live-dot{width:6px;height:6px;border-radius:50%;background:var(--buy);display:inline-block;margin-right:5px;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);}
-.tab{flex:1;padding:10px 0;text-align:center;font-size:11px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
-.tab.active{color:var(--buy);border-bottom-color:var(--buy);}
+.badge{font-family:var(--mono);font-size:11px;background:var(--sell);color:#fff;padding:2px 8px;border-radius:10px;}
 .section{padding:14px 16px;}
-.section-label{font-size:10px;font-weight:500;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;border-left:2px solid var(--buy);padding-left:8px;}
-.pane{display:none;}.pane.active{display:block;}
-.alert-card{background:var(--surface);border-radius:10px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;display:flex;}
-.alert-accent{width:4px;flex-shrink:0;}
-.alert-body{flex:1;padding:11px 12px;}
-.alert-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;}
-.alert-name{font-size:13px;font-weight:500;}
-.alert-ticker{font-size:10px;color:var(--muted);font-family:var(--mono);}
-.signal-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;}
-.badge-buy{background:#0A2E22;color:#00C896;}
-.badge-hold{background:#1E1500;color:#F5A623;}
-.badge-sell{background:#2E0A0D;color:#FF4455;}
-.alert-msg{font-size:11px;color:#C8D4E8;line-height:1.55;margin-bottom:6px;}
-.alert-meta{display:flex;justify-content:space-between;align-items:center;}
-.alert-time{font-size:10px;color:var(--dim);font-family:var(--mono);}
-.conf-row{display:flex;align-items:center;gap:6px;}
-.conf-bar-bg{width:60px;height:4px;background:#252D3D;border-radius:2px;overflow:hidden;}
-.conf-bar-fill{height:100%;border-radius:2px;}
-.conf-lbl{font-size:10px;color:var(--muted);}
-.filter-row{display:flex;gap:6px;padding:0 16px 12px;flex-wrap:wrap;}
-.filter-btn{font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;}
-.filter-btn.active{background:#0A2E22;color:var(--buy);border-color:var(--buy);}
-.set-alert-card{background:var(--surface);border-radius:10px;border:1px solid var(--border);padding:14px;}
-.input-row{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
-.input-label{font-size:11px;color:var(--muted);}
-.st-input{background:#0F1219;border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--mono);width:100%;outline:none;}
-.st-input:focus{border-color:var(--buy);}
-.st-select{background:#0F1219;border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;width:100%;outline:none;appearance:none;}
-.add-btn{width:100%;background:#0A2E22;border:1px solid var(--buy);color:var(--buy);border-radius:10px;padding:12px;font-size:13px;font-weight:500;cursor:pointer;}
-.add-btn:hover{background:#0D3D2D;}
-.active-alerts-label{font-size:11px;color:var(--muted);margin-bottom:10px;}
-.price-alert-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #1E2535;}
-.price-alert-row:last-child{border-bottom:none;}
-.pa-ticker{font-family:var(--mono);font-size:12px;font-weight:600;width:48px;}
-.pa-type{font-size:10px;padding:2px 6px;border-radius:3px;flex-shrink:0;}
-.pa-price{font-family:var(--mono);font-size:12px;flex:1;}
-.pa-status{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:500;}
-.status-active{background:#0A2E22;color:#00C896;}
-.status-triggered{background:#1E1500;color:#F5A623;}
-.pa-del{font-size:14px;color:var(--dim);cursor:pointer;background:none;border:none;padding:0;line-height:1;}
-.pa-del:hover{color:var(--sell);}
-.nav-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:20;}
-.nav-item{flex:1;padding:10px 0;text-align:center;font-size:10px;color:var(--muted);text-decoration:none;}
-.nav-item.active{color:var(--buy);}
+.section-label{font-size:10px;font-weight:500;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;}
+.add-btn{width:100%;padding:10px;background:rgba(0,200,150,0.1);border:1px dashed var(--buy);border-radius:8px;color:var(--buy);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;}
+.add-form{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:14px;margin-bottom:14px;display:none;}
+.add-form.open{display:block;}
+.form-row{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
+.form-label{font-size:11px;color:var(--muted);width:52px;flex-shrink:0;}
+.form-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;font-family:var(--mono);outline:none;}
+.form-input:focus{border-color:var(--buy);}
+.form-select{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;outline:none;}
+.form-btns{display:flex;gap:8px;margin-top:4px;}
+.btn-primary{flex:1;padding:8px;background:var(--buy);border:none;border-radius:6px;color:#0B0D12;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-cancel{flex:1;padding:8px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--muted);font-size:13px;cursor:pointer;}
 </style>
 </head>
 <body>
 <div class="topbar">
   <div class="logo">SMART<span>TRADING</span></div>
-  <div style="font-size:11px;color:var(--muted);"><span class="live-dot"></span>3 alert aktif</div>
+  <div class="badge" id="alert-badge">2 Aktif</div>
 </div>
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('feed',this)">Feed Sinyal</div>
-  <div class="tab" onclick="switchTab('price',this)">Price Alert</div>
-</div>
-
-<div class="pane active" id="pane-feed">
-  <div class="filter-row">
-    <button class="filter-btn active" onclick="filterAlert('ALL',this)">Semua</button>
-    <button class="filter-btn" onclick="filterAlert('BUY',this)">BUY</button>
-    <button class="filter-btn" onclick="filterAlert('HOLD',this)">HOLD</button>
-    <button class="filter-btn" onclick="filterAlert('SELL',this)">SELL</button>
+<div class="section">
+  <div class="add-btn" id="add-btn" onclick="toggleForm()">
+    <span style="font-size:16px;">+</span> Set Price Alert
   </div>
-  <div class="section" style="padding-top:0;">
-    <div id="alert-feed">
-
-      <div class="alert-card" data-signal="BUY">
-        <div class="alert-accent" style="background:#00C896;"></div>
-        <div class="alert-body">
-          <div class="alert-top">
-            <div><div class="alert-name">Bank Central Asia</div><div class="alert-ticker">BBCA · Perbankan</div></div>
-            <span class="signal-badge badge-buy">BUY</span>
-          </div>
-          <div class="alert-msg">Volume beli melonjak 2x lipat — indikasi akumulasi investor institusional sebelum RUPS.</div>
-          <div class="alert-meta">
-            <div class="conf-row">
-              <div class="conf-bar-bg"><div class="conf-bar-fill" style="width:87%;background:#00C896;"></div></div>
-              <span class="conf-lbl">Sangat Tinggi</span>
-            </div>
-            <span class="alert-time">15:14 WIB</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="alert-card" data-signal="BUY">
-        <div class="alert-accent" style="background:#00C896;"></div>
-        <div class="alert-body">
-          <div class="alert-top">
-            <div><div class="alert-name">Telkom Indonesia</div><div class="alert-ticker">TLKM · Telekomunikasi</div></div>
-            <span class="signal-badge badge-buy">BUY</span>
-          </div>
-          <div class="alert-msg">Harga mendekati level support kuat yang bertahan 3 bulan terakhir.</div>
-          <div class="alert-meta">
-            <div class="conf-row">
-              <div class="conf-bar-bg"><div class="conf-bar-fill" style="width:74%;background:#00C896;"></div></div>
-              <span class="conf-lbl">Tinggi</span>
-            </div>
-            <span class="alert-time">14:45 WIB</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="alert-card" data-signal="SELL">
-        <div class="alert-accent" style="background:#FF4455;"></div>
-        <div class="alert-body">
-          <div class="alert-top">
-            <div><div class="alert-name">Astra International</div><div class="alert-ticker">ASII · Otomotif</div></div>
-            <span class="signal-badge badge-sell">SELL</span>
-          </div>
-          <div class="alert-msg">Volume jual meningkat signifikan menjelang penutupan. Tren melemah sejak pagi.</div>
-          <div class="alert-meta">
-            <div class="conf-row">
-              <div class="conf-bar-bg"><div class="conf-bar-fill" style="width:76%;background:#FF4455;"></div></div>
-              <span class="conf-lbl">Tinggi</span>
-            </div>
-            <span class="alert-time">13:30 WIB</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="alert-card" data-signal="HOLD">
-        <div class="alert-accent" style="background:#F5A623;"></div>
-        <div class="alert-body">
-          <div class="alert-top">
-            <div><div class="alert-name">Indofood Sukses</div><div class="alert-ticker">INDF · Consumer</div></div>
-            <span class="signal-badge badge-hold">HOLD</span>
-          </div>
-          <div class="alert-msg">Tren sideways. Belum ada pemicu kenaikan maupun tekanan jual yang kuat.</div>
-          <div class="alert-meta">
-            <div class="conf-row">
-              <div class="conf-bar-bg"><div class="conf-bar-fill" style="width:71%;background:#F5A623;"></div></div>
-              <span class="conf-lbl">Tinggi</span>
-            </div>
-            <span class="alert-time">11:00 WIB</span>
-          </div>
-        </div>
-      </div>
-
+  <div id="add-form" class="add-form">
+    <div class="form-row">
+      <div class="form-label">Saham</div>
+      <input id="f-ticker" class="form-input" placeholder="contoh: BBCA" maxlength="6" oninput="this.value=this.value.toUpperCase()"/>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Kondisi</div>
+      <select id="f-cond" class="form-select">
+        <option value="above">Harga naik di atas</option>
+        <option value="below">Harga turun di bawah</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Target</div>
+      <input id="f-price" class="form-input" placeholder="contoh: 9500" type="number"/>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Catatan</div>
+      <input id="f-note" class="form-input" placeholder="opsional"/>
+    </div>
+    <div class="form-btns">
+      <button class="btn-cancel" onclick="toggleForm()">Batal</button>
+      <button class="btn-primary" onclick="addAlert()">Simpan Alert</button>
     </div>
   </div>
+
+<style>
+.alert-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;}
+.alert-card.triggered{border-left:3px solid var(--buy);}
+.alert-card.active{border-left:3px solid var(--hold);}
+.alert-card.expired{border-left:3px solid var(--dim);opacity:0.6;}
+.alert-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+.dot-triggered{background:var(--buy);}
+.dot-active{background:var(--hold);}
+.dot-expired{background:var(--dim);}
+.alert-body{flex:1;}
+.alert-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}
+.alert-ticker{font-family:var(--mono);font-size:13px;font-weight:600;}
+.alert-status{font-size:10px;font-weight:500;padding:2px 7px;border-radius:10px;letter-spacing:0.5px;}
+.status-triggered{background:rgba(0,200,150,0.15);color:var(--buy);}
+.status-active{background:rgba(245,166,35,0.15);color:var(--hold);}
+.status-expired{background:rgba(74,85,104,0.3);color:var(--muted);}
+.alert-cond{font-size:12px;color:var(--muted);margin-bottom:3px;}
+.alert-cond span{color:var(--text);}
+.alert-time{font-size:11px;color:var(--dim);}
+.alert-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;padding:0 2px;}
+.alert-del:hover{color:var(--sell);}
+.log-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.log-row{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;}
+.log-row:last-child{border-bottom:none;}
+.log-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0;}
+.log-text{flex:1;font-size:12px;color:var(--muted);line-height:1.5;}
+.log-text strong{color:var(--text);}
+.log-time{font-family:var(--mono);font-size:10px;color:var(--dim);flex-shrink:0;}
+.nav-bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);display:flex;}
+.nav-item{flex:1;padding:10px 0;text-align:center;font-size:10px;color:var(--dim);cursor:pointer;}
+.nav-item.active{color:var(--buy);}
+.nav-icon{font-size:18px;display:block;margin-bottom:2px;}
+</style>
+  <div class="section-label">Alert Aktif</div>
+  <div id="alerts-list"></div>
+  <div class="section-label" style="margin-top:16px;">Log Notifikasi</div>
+  <div class="log-wrap" id="log-list"></div>
 </div>
-
-<div class="pane" id="pane-price">
-  <div class="section">
-    <div class="section-label">Set Price Alert Baru</div>
-    <div class="set-alert-card">
-      <div class="input-row">
-        <span class="input-label">Ticker</span>
-        <input class="st-input" id="pa-ticker" placeholder="contoh: BBCA" maxlength="6"/>
-      </div>
-      <div class="input-row">
-        <span class="input-label">Jenis Alert</span>
-        <select class="st-select" id="pa-type">
-          <option value="above">Harga naik di atas</option>
-          <option value="below">Harga turun di bawah</option>
-        </select>
-      </div>
-      <div class="input-row">
-        <span class="input-label">Target Harga (Rp)</span>
-        <input class="st-input" id="pa-price" placeholder="contoh: 10500" type="number"/>
-      </div>
-      <button class="add-btn" onclick="addPriceAlert()">+ Tambah Alert</button>
-    </div>
-
-    <div style="margin-top:16px;">
-      <div class="section-label">Alert Aktif</div>
-      <div class="set-alert-card" style="padding:4px 14px;">
-        <div id="pa-list">
-          <div class="price-alert-row">
-            <span class="pa-ticker pos">BBCA</span>
-            <span class="pa-type" style="background:#0A2E22;color:#00C896;">Naik &gt;</span>
-            <span class="pa-price">Rp 10.500</span>
-            <span class="pa-status status-active">Aktif</span>
-            <button class="pa-del" onclick="delAlert(this)">&#10005;</button>
-          </div>
-          <div class="price-alert-row">
-            <span class="pa-ticker neg">ASII</span>
-            <span class="pa-type" style="background:#2E0A0D;color:#FF4455;">Turun &lt;</span>
-            <span class="pa-price">Rp 5.000</span>
-            <span class="pa-status status-active">Aktif</span>
-            <button class="pa-del" onclick="delAlert(this)">&#10005;</button>
-          </div>
-          <div class="price-alert-row">
-            <span class="pa-ticker" style="color:#F5A623;">TLKM</span>
-            <span class="pa-type" style="background:#0A2E22;color:#00C896;">Naik &gt;</span>
-            <span class="pa-price">Rp 3.500</span>
-            <span class="pa-status status-triggered">Triggered</span>
-            <button class="pa-del" onclick="delAlert(this)">&#10005;</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<div style="height:64px;"></div>
+<div class="nav-bottom">
+  <div class="nav-item" onclick="location.href='home.html'"><span class="nav-icon">&#8962;</span>Home</div>
+  <div class="nav-item" onclick="location.href='watchlist.html'"><span class="nav-icon">&#9776;</span>Watchlist</div>
+  <div class="nav-item" onclick="location.href='deepdive.html'"><span class="nav-icon">&#9740;</span>Deep Dive</div>
+  <div class="nav-item" onclick="location.href='globalpulse.html'"><span class="nav-icon">&#127758;</span>Global</div>
+  <div class="nav-item active"><span class="nav-icon">&#9888;</span>Alert</div>
 </div>
-
-<nav class="nav-bar">
-  <a class="nav-item" href="home.html">Home</a>
-  <a class="nav-item" href="watchlist.html">Watchlist</a>
-  <a class="nav-item" href="deepdive.html">Deep Dive</a>
-  <a class="nav-item" href="globalpulse.html">Global</a>
-  <a class="nav-item active" href="alert.html">Alert</a>
-</nav>
 
 <script>
-function switchTab(name, el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('pane-' + name).classList.add('active');
+let alerts=[
+  {id:1,ticker:'BBCA',cond:'above',price:9500,note:'Breakout resistance',status:'active',time:'01 Apr, 14:22'},
+  {id:2,ticker:'TLKM',cond:'below',price:3200,note:'Support test',status:'triggered',time:'02 Apr, 09:15'},
+  {id:3,ticker:'ASII',cond:'above',price:5800,note:'',status:'expired',time:'28 Mar, 10:00'},
+];
+const logs=[
+  {icon:'&#10003;',text:'<strong>TLKM</strong> menyentuh <strong>Rp 3.195</strong> — alert tercapai',time:'02 Apr 09:15',c:'var(--buy)'},
+  {icon:'&#10003;',text:'<strong>BRIS</strong> menyentuh <strong>Rp 2.460</strong> — alert tercapai',time:'01 Apr 14:08',c:'var(--buy)'},
+  {icon:'i',text:'Alert <strong>BMRI naik di atas 5.500</strong> dibuat',time:'01 Apr 11:30',c:'var(--hold)'},
+  {icon:'&#215;',text:'Alert <strong>ASII naik di atas 5.800</strong> kedaluwarsa',time:'31 Mar 16:00',c:'var(--dim)'},
+];
+let nxtId=10;
+function render(){
+  const sorted=[...alerts.filter(a=>a.status!=='expired'),...alerts.filter(a=>a.status==='expired')];
+  document.getElementById('alerts-list').innerHTML=sorted.length?sorted.map(a=>{
+    const cL=a.cond==='above'?'naik di atas':'turun di bawah';
+    const pS='Rp '+Number(a.price).toLocaleString('id-ID');
+    return`<div class="alert-card ${a.status}">
+      <div class="alert-dot dot-${a.status}"></div>
+      <div class="alert-body">
+        <div class="alert-top">
+          <div class="alert-ticker">${a.ticker}</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="alert-status status-${a.status}">${a.status.toUpperCase()}</span>
+            ${a.status!=='triggered'?`<button class="alert-del" onclick="del(${a.id})">&#215;</button>`:''}
+          </div>
+        </div>
+        <div class="alert-cond">Jika harga <span>${cL} ${pS}</span></div>
+        ${a.note?`<div style="font-size:11px;color:var(--muted);margin-bottom:2px;">${a.note}</div>`:''}
+        <div class="alert-time">${a.time}</div>
+      </div></div>`;
+  }).join(''):'<div style="text-align:center;padding:28px;color:var(--dim);">Belum ada alert. Tap "+ Set Price Alert".</div>';
+  const ac=alerts.filter(a=>a.status==='active').length;
+  const b=document.getElementById('alert-badge');
+  b.textContent=ac+' Aktif';b.style.display=ac?'':'none';
+  document.getElementById('log-list').innerHTML=logs.map(l=>`<div class="log-row"><div class="log-icon" style="color:${l.c};">${l.icon}</div><div class="log-text">${l.text}</div><div class="log-time">${l.time}</div></div>`).join('');
 }
-function filterAlert(type, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.alert-card').forEach(card => {
-    card.style.display = (type === 'ALL' || card.dataset.signal === type) ? 'flex' : 'none';
-  });
+function toggleForm(){document.getElementById('add-form').classList.toggle('open');}
+function del(id){alerts=alerts.filter(a=>a.id!==id);render();}
+function addAlert(){
+  const t=document.getElementById('f-ticker').value.trim().toUpperCase();
+  const p=parseFloat(document.getElementById('f-price').value);
+  if(!t||!p||t.length<2)return;
+  const now=new Date();
+  alerts.unshift({id:++nxtId,ticker:t,cond:document.getElementById('f-cond').value,price:p,note:document.getElementById('f-note').value.trim(),status:'active',time:now.getDate()+' Apr, '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')});
+  document.getElementById('f-ticker').value='';document.getElementById('f-price').value='';document.getElementById('f-note').value='';
+  document.getElementById('add-form').classList.remove('open');
+  render();
 }
-function addPriceAlert() {
-  const ticker = document.getElementById('pa-ticker').value.toUpperCase().trim();
-  const type   = document.getElementById('pa-type').value;
-  const price  = parseInt(document.getElementById('pa-price').value);
-  if (!ticker || !price) return;
-  const label = type === 'above' ? "Naik >" : "Turun <";
-  const col   = type === 'above' ? "#00C896" : "#FF4455";
-  const bg    = type === 'above' ? "#0A2E22" : "#2E0A0D";
-  const row = document.createElement('div');
-  row.className = 'price-alert-row';
-  row.innerHTML = `<span class="pa-ticker" style="color:${col};">${ticker}</span>
-    <span class="pa-type" style="background:${bg};color:${col};">${label}</span>
-    <span class="pa-price">Rp ${price.toLocaleString()}</span>
-    <span class="pa-status status-active">Aktif</span>
-    <button class="pa-del" onclick="delAlert(this)">&#10005;</button>`;
-  document.getElementById('pa-list').appendChild(row);
-  document.getElementById('pa-ticker').value = '';
-  document.getElementById('pa-price').value  = '';
-}
-function delAlert(btn) { btn.closest('.price-alert-row').remove(); }
+render();
 </script>
 </body>
 </html>

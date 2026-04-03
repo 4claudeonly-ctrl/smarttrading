@@ -6,197 +6,141 @@
 <title>SmartTrading — Track Record</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0B0D12;--surface:#161B25;--border:#252D3D;--buy:#00C896;--hold:#F5A623;--sell:#FF4455;--text:#EDF2FF;--muted:#8B95A8;--dim:#4A5568;--mono:'JetBrains Mono','Courier New',monospace;}
+:root{--bg:#0B0D12;--surface:#161B25;--surface2:#1E2636;--border:#252D3D;--border2:#2E3A50;--buy:#00C896;--hold:#F5A623;--sell:#FF4455;--text:#EDF2FF;--muted:#8B95A8;--dim:#4A5568;--mono:'JetBrains Mono','Courier New',monospace;}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;max-width:430px;margin:0 auto;}
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
 .logo{font-size:15px;font-weight:600;letter-spacing:1px;}.logo span{color:var(--buy);}
 .section{padding:14px 16px;}
-.section-label{font-size:10px;font-weight:500;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;border-left:2px solid var(--buy);padding-left:8px;}
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
-.stat-num{font-family:var(--mono);font-size:24px;font-weight:700;margin-bottom:4px;}
-.stat-lbl{font-size:10px;color:var(--muted);}
-.win-rate-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;}
-.wr-title{font-size:11px;color:var(--muted);margin-bottom:10px;}
-.wr-bar-wrap{display:flex;gap:2px;height:10px;border-radius:5px;overflow:hidden;margin-bottom:8px;}
-.wr-win{background:#00C896;}
-.wr-loss{background:#FF4455;}
-.wr-neu{background:#F5A623;}
-.wr-legend{display:flex;gap:12px;}
-.wr-leg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);}
-.wr-dot{width:8px;height:8px;border-radius:50%;}
-.by-signal{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
-.sig-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
-.sig-type{font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;margin-bottom:8px;display:inline-block;}
-.sig-wr{font-family:var(--mono);font-size:20px;font-weight:700;}
-.sig-count{font-size:10px;color:var(--muted);margin-top:3px;}
-.filter-row{display:flex;gap:6px;padding:0 0 12px;flex-wrap:wrap;}
-.filter-btn{font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;}
-.filter-btn.active{background:#0A2E22;color:var(--buy);border-color:var(--buy);}
-.hist-table{width:100%;border-collapse:collapse;}
-.hist-table th{font-size:10px;color:var(--dim);text-align:left;padding:6px 0;border-bottom:1px solid var(--border);letter-spacing:.5px;}
-.hist-table td{font-size:11px;padding:9px 0;border-bottom:1px solid #1E2535;vertical-align:middle;}
-.hist-table tr:last-child td{border-bottom:none;}
-.signal-pill{font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;}
-.outcome-pill{font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;}
-.win-pill{background:#0A2E22;color:#00C896;}
-.loss-pill{background:#2E0A0D;color:#FF4455;}
-.neu-pill{background:#1E1500;color:#F5A623;}
-.nav-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:20;}
-.nav-item{flex:1;padding:10px 0;text-align:center;font-size:10px;color:var(--muted);text-decoration:none;}
-.nav-item.active{color:var(--buy);}
+.section-label{font-size:10px;font-weight:500;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;}
+.stat-num{font-family:var(--mono);font-size:20px;font-weight:600;}
+.stat-lbl{font-size:10px;color:var(--muted);margin-top:3px;}
+.wr-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;}
+.wr-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+.wr-title{font-size:12px;color:var(--muted);}
+.wr-pct{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--buy);}
+.wr-bar-bg{background:var(--surface2);border-radius:4px;height:8px;overflow:hidden;margin-bottom:6px;}
+.wr-bar-fill{height:100%;border-radius:4px;background:var(--buy);}
+.wr-sub{font-size:11px;color:var(--dim);}
+.wr-sub span{color:var(--muted);}
 </style>
 </head>
 <body>
 <div class="topbar">
   <div class="logo">SMART<span>TRADING</span></div>
-  <div style="font-size:12px;color:var(--muted);">Track Record 30 Hari</div>
+  <div style="font-size:11px;color:var(--dim);font-family:var(--mono);">30 HARI TERAKHIR</div>
 </div>
-
 <div class="section">
-  <div class="section-label">Ringkasan 30 Hari</div>
-  <div class="stat-grid">
-    <div class="stat-card">
-      <div class="stat-num" style="color:#00C896;">68%</div>
-      <div class="stat-lbl">Win Rate Keseluruhan</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num">142</div>
-      <div class="stat-lbl">Total Sinyal Dianalisis</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num" style="color:#00C896;">97</div>
-      <div class="stat-lbl">WIN</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num" style="color:#FF4455;">45</div>
-      <div class="stat-lbl">LOSS / Netral</div>
-    </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-num" style="color:var(--buy);">47</div><div class="stat-lbl">Total Sinyal</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--buy);">31</div><div class="stat-lbl">WIN</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--sell);">16</div><div class="stat-lbl">LOSS</div></div>
   </div>
-
-  <div class="win-rate-block">
-    <div class="wr-title">Distribusi hasil — 142 sinyal</div>
-    <div class="wr-bar-wrap">
-      <div class="wr-win" style="flex:68;"></div>
-      <div class="wr-loss" style="flex:20;"></div>
-      <div class="wr-neu" style="flex:12;"></div>
-    </div>
-    <div class="wr-legend">
-      <div class="wr-leg"><div class="wr-dot" style="background:#00C896;"></div>WIN (97 · 68%)</div>
-      <div class="wr-leg"><div class="wr-dot" style="background:#FF4455;"></div>LOSS (29 · 20%)</div>
-      <div class="wr-leg"><div class="wr-dot" style="background:#F5A623;"></div>Netral (16 · 12%)</div>
-    </div>
-  </div>
-
-  <div class="section-label">Akurasi per Jenis Sinyal</div>
-  <div class="by-signal">
-    <div class="sig-card">
-      <div class="sig-type" style="background:#0A2E22;color:#00C896;">BUY</div>
-      <div class="sig-wr" style="color:#00C896;">72%</div>
-      <div class="sig-count">58 sinyal</div>
-    </div>
-    <div class="sig-card">
-      <div class="sig-type" style="background:#1E1500;color:#F5A623;">HOLD</div>
-      <div class="sig-wr" style="color:#F5A623;">61%</div>
-      <div class="sig-count">46 sinyal</div>
-    </div>
-    <div class="sig-card">
-      <div class="sig-type" style="background:#2E0A0D;color:#FF4455;">SELL</div>
-      <div class="sig-wr" style="color:#00C896;">71%</div>
-      <div class="sig-count">38 sinyal</div>
-    </div>
+  <div class="wr-card">
+    <div class="wr-head"><div class="wr-title">Win Rate 30 Hari</div><div class="wr-pct">66%</div></div>
+    <div class="wr-bar-bg"><div class="wr-bar-fill" style="width:66%;"></div></div>
+    <div class="wr-sub">Target: <span>60%</span> &nbsp;&nbsp; Avg Return WIN: <span style="color:var(--buy);">+3.8%</span> &nbsp;&nbsp; Avg Loss: <span style="color:var(--sell);">-1.9%</span></div>
   </div>
 </div>
 
-<div class="section" style="padding-bottom:80px;">
-  <div class="section-label" style="margin-bottom:6px;">Riwayat Sinyal</div>
-  <div class="filter-row" id="filter-row">
-    <button class="filter-btn active" onclick="filterHistory('ALL',this)">Semua</button>
-    <button class="filter-btn" onclick="filterHistory('BUY',this)">BUY</button>
-    <button class="filter-btn" onclick="filterHistory('HOLD',this)">HOLD</button>
-    <button class="filter-btn" onclick="filterHistory('SELL',this)">SELL</button>
-    <button class="filter-btn" onclick="filterHistory('WIN',this)">WIN saja</button>
+<style>
+.sector-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;}
+.sector-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);}
+.sector-row:last-child{border-bottom:none;}
+.sector-name{font-size:12px;color:var(--muted);width:90px;flex-shrink:0;}
+.sector-bar-bg{flex:1;background:var(--surface2);border-radius:3px;height:6px;overflow:hidden;}
+.sector-bar-fill{height:100%;border-radius:3px;}
+.sector-pct{font-family:var(--mono);font-size:11px;width:36px;text-align:right;flex-shrink:0;}
+.sector-wl{font-size:10px;color:var(--dim);width:32px;text-align:right;flex-shrink:0;}
+.filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.chip{padding:4px 10px;border:1px solid var(--border2);border-radius:20px;font-size:11px;color:var(--muted);cursor:pointer;background:transparent;}
+.chip.active{background:rgba(0,200,150,0.15);border-color:var(--buy);color:var(--buy);}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.sig-table{width:100%;border-collapse:collapse;}
+.sig-table th{padding:8px 10px;font-size:10px;color:var(--dim);font-weight:500;letter-spacing:0.8px;text-transform:uppercase;text-align:left;border-bottom:1px solid var(--border);background:var(--surface2);}
+.sig-table td{padding:9px 10px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.sig-table tr:last-child td{border-bottom:none;}
+.t-ticker{font-family:var(--mono);font-weight:600;}
+.t-date{font-size:10px;color:var(--dim);}
+.side-tag{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;}
+.s-buy{background:rgba(0,200,150,0.15);color:var(--buy);}
+.s-sell{background:rgba(255,68,85,0.15);color:var(--sell);}
+.res-tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:var(--mono);}
+.r-win{background:rgba(0,200,150,0.15);color:var(--buy);}
+.r-loss{background:rgba(255,68,85,0.15);color:var(--sell);}
+.r-open{background:rgba(245,166,35,0.12);color:var(--hold);}
+.nav-bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);display:flex;}
+.nav-item{flex:1;padding:10px 0;text-align:center;font-size:10px;color:var(--dim);cursor:pointer;}
+.nav-item.active{color:var(--buy);}
+.nav-icon{font-size:18px;display:block;margin-bottom:2px;}
+</style>
+<div class="section" style="padding-top:0;">
+  <div class="section-label">Akurasi per Sektor</div>
+  <div class="sector-wrap" id="sectors"></div>
+  <div class="section-label" style="margin-top:16px;">Riwayat Sinyal</div>
+  <div class="filter-row">
+    <button class="chip active" onclick="filter('all',this)">Semua</button>
+    <button class="chip" onclick="filter('WIN',this)">WIN</button>
+    <button class="chip" onclick="filter('LOSS',this)">LOSS</button>
+    <button class="chip" onclick="filter('OPEN',this)">Masih Buka</button>
   </div>
-  <table class="hist-table" id="hist-table">
-    <thead>
-      <tr>
-        <th>Tanggal</th><th>Ticker</th><th>Sinyal</th><th>Conf.</th><th>Outcome</th><th>%</th>
-      </tr>
-    </thead>
-    <tbody id="hist-body">
-      <tr data-signal="BUY" data-outcome="WIN">
-        <td style="color:var(--dim);font-family:var(--mono);">01 Apr</td>
-        <td style="font-family:var(--mono);font-weight:600;">BBCA</td>
-        <td><span class="signal-pill" style="background:#0A2E22;color:#00C896;">BUY</span></td>
-        <td style="color:var(--muted);font-family:var(--mono);">87%</td>
-        <td><span class="outcome-pill win-pill">WIN</span></td>
-        <td style="font-family:var(--mono);color:#00C896;">+3.2%</td>
-      </tr>
-      <tr data-signal="SELL" data-outcome="WIN">
-        <td style="color:var(--dim);font-family:var(--mono);">01 Apr</td>
-        <td style="font-family:var(--mono);font-weight:600;">ASII</td>
-        <td><span class="signal-pill" style="background:#2E0A0D;color:#FF4455;">SELL</span></td>
-        <td style="color:var(--muted);font-family:var(--mono);">76%</td>
-        <td><span class="outcome-pill win-pill">WIN</span></td>
-        <td style="font-family:var(--mono);color:#00C896;">-2.1%</td>
-      </tr>
-      <tr data-signal="BUY" data-outcome="WIN">
-        <td style="color:var(--dim);font-family:var(--mono);">31 Mar</td>
-        <td style="font-family:var(--mono);font-weight:600;">TLKM</td>
-        <td><span class="signal-pill" style="background:#0A2E22;color:#00C896;">BUY</span></td>
-        <td style="color:var(--muted);font-family:var(--mono);">74%</td>
-        <td><span class="outcome-pill win-pill">WIN</span></td>
-        <td style="font-family:var(--mono);color:#00C896;">+1.9%</td>
-      </tr>
-      <tr data-signal="HOLD" data-outcome="NEU">
-        <td style="color:var(--dim);font-family:var(--mono);">31 Mar</td>
-        <td style="font-family:var(--mono);font-weight:600;">INDF</td>
-        <td><span class="signal-pill" style="background:#1E1500;color:#F5A623;">HOLD</span></td>
-        <td style="color:var(--muted);font-family:var(--mono);">71%</td>
-        <td><span class="outcome-pill neu-pill">NETRAL</span></td>
-        <td style="font-family:var(--mono);color:#F5A623;">+0.1%</td>
-      </tr>
-      <tr data-signal="BUY" data-outcome="LOSS">
-        <td style="color:var(--dim);font-family:var(--mono);">30 Mar</td>
-        <td style="font-family:var(--mono);font-weight:600;">BBRI</td>
-        <td><span class="signal-pill" style="background:#0A2E22;color:#00C896;">BUY</span></td>
-        <td style="color:var(--muted);font-family:var(--mono);">73%</td>
-        <td><span class="outcome-pill loss-pill">LOSS</span></td>
-        <td style="font-family:var(--mono);color:#FF4455;">-1.4%</td>
-      </tr>
-      <tr data-signal="SELL" data-outcome="WIN">
-        <td style="color:var(--dim);font-family:var(--mono);">30 Mar</td>
-        <td style="font-family:var(--mono);font-weight:600;">HMSP</td>
-        <td><span class="signal-pill" style="background:#2E0A0D;color:#FF4455;">SELL</span></td>
-        <td style="color:var(--muted);font-family:var(--mono);">80%</td>
-        <td><span class="outcome-pill win-pill">WIN</span></td>
-        <td style="font-family:var(--mono);color:#00C896;">-3.5%</td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="table-wrap">
+    <table class="sig-table">
+      <thead><tr><th>SAHAM</th><th>SISI</th><th>ENTRY/EXIT</th><th>RETURN</th><th>HASIL</th></tr></thead>
+      <tbody id="sig-body"></tbody>
+    </table>
+  </div>
 </div>
-
-<nav class="nav-bar">
-  <a class="nav-item" href="home.html">Home</a>
-  <a class="nav-item" href="watchlist.html">Watchlist</a>
-  <a class="nav-item" href="deepdive.html">Deep Dive</a>
-  <a class="nav-item" href="globalpulse.html">Global</a>
-  <a class="nav-item active" href="trackrecord.html">Track Record</a>
-</nav>
+<div style="height:64px;"></div>
+<div class="nav-bottom">
+  <div class="nav-item" onclick="location.href='home.html'"><span class="nav-icon">&#8962;</span>Home</div>
+  <div class="nav-item" onclick="location.href='watchlist.html'"><span class="nav-icon">&#9776;</span>Watchlist</div>
+  <div class="nav-item" onclick="location.href='deepdive.html'"><span class="nav-icon">&#9740;</span>Deep Dive</div>
+  <div class="nav-item" onclick="location.href='globalpulse.html'"><span class="nav-icon">&#127758;</span>Global</div>
+  <div class="nav-item active" onclick="location.href='alert.html'"><span class="nav-icon">&#9888;</span>Alert</div>
+</div>
 
 <script>
-function filterHistory(type, btn) {
-  document.querySelectorAll('#filter-row .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('#hist-body tr').forEach(row => {
-    const sig = row.dataset.signal;
-    const out = row.dataset.outcome;
-    const show = type === 'ALL' ? true
-      : type === 'WIN' ? out === 'WIN'
-      : sig === type;
-    row.style.display = show ? '' : 'none';
-  });
+const sectors=[
+  {name:'Perbankan',win:12,total:16},
+  {name:'Telko',win:7,total:10},
+  {name:'Konsumer',win:5,total:8},
+  {name:'Energi',win:4,total:7},
+  {name:'Infrastruktur',win:3,total:6},
+];
+const signals=[
+  {ticker:'BBCA',side:'BUY',entry:9200,exit:9480,ret:3.0,result:'WIN',date:'01 Apr'},
+  {ticker:'TLKM',side:'BUY',entry:3350,exit:3200,ret:-4.5,result:'LOSS',date:'01 Apr'},
+  {ticker:'BRIS',side:'BUY',entry:2300,exit:2460,ret:7.0,result:'WIN',date:'31 Mar'},
+  {ticker:'ASII',side:'BUY',entry:5650,exit:null,ret:null,result:'OPEN',date:'02 Apr'},
+  {ticker:'BMRI',side:'BUY',entry:5400,exit:5580,ret:3.3,result:'WIN',date:'30 Mar'},
+  {ticker:'UNVR',side:'SELL',entry:4200,exit:4050,ret:3.6,result:'WIN',date:'29 Mar'},
+  {ticker:'GOTO',side:'BUY',entry:68,exit:64,ret:-5.9,result:'LOSS',date:'28 Mar'},
+  {ticker:'ICBP',side:'BUY',entry:10200,exit:10650,ret:4.4,result:'WIN',date:'27 Mar'},
+];
+document.getElementById('sectors').innerHTML=sectors.map(s=>{
+  const p=Math.round(s.win/s.total*100);
+  const c=p>=70?'var(--buy)':p>=50?'var(--hold)':'var(--sell)';
+  return`<div class="sector-row"><div class="sector-name">${s.name}</div><div class="sector-bar-bg"><div class="sector-bar-fill" style="width:${p}%;background:${c};"></div></div><div class="sector-pct" style="color:${c};">${p}%</div><div class="sector-wl">${s.win}/${s.total}</div></div>`;
+}).join('');
+function renderTable(f){
+  const rows=f==='all'?signals:signals.filter(s=>s.result===f);
+  document.getElementById('sig-body').innerHTML=rows.length?rows.map(s=>{
+    const eS=s.entry>=1000?(s.entry/1000).toFixed(1)+'k':s.entry;
+    const xS=s.exit?(s.exit>=1000?(s.exit/1000).toFixed(1)+'k':s.exit):'—';
+    const rS=s.ret!==null?(s.ret>0?'+':'')+s.ret.toFixed(1)+'%':'—';
+    const rC=s.ret>0?'style="color:var(--buy);"':s.ret<0?'style="color:var(--sell);"':'';
+    const sC=s.side==='BUY'?'s-buy':'s-sell';
+    const rc=s.result==='WIN'?'r-win':s.result==='LOSS'?'r-loss':'r-open';
+    return`<tr><td class="t-ticker">${s.ticker}<div class="t-date">${s.date}</div></td><td><span class="side-tag ${sC}">${s.side}</span></td><td style="font-family:var(--mono);font-size:11px;color:var(--muted);">${eS}<br><span style="color:var(--dim);">${xS}</span></td><td ${rC} style="font-family:var(--mono);font-size:12px;">${rS}</td><td><span class="res-tag ${rc}">${s.result}</span></td></tr>`;
+  }).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--dim);padding:24px;">Tidak ada data</td></tr>';
 }
+function filter(f,el){
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');renderTable(f);
+}
+renderTable('all');
 </script>
 </body>
 </html>

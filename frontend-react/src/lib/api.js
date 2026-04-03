@@ -3,21 +3,32 @@ import { supabase } from './supabase'
 const MIN_CONFIDENCE = 70
 
 // ── Signals ──────────────────────────────────────────────────
+// v2.0: gunakan v_latest_signals_v2 (include phase + macro_flag)
 export async function getLatestSignals(limit = 20) {
   const { data, error } = await supabase
-    .from('v_latest_signals')
+    .from('v_latest_signals_v2')
     .select('*')
     .gte('confidence', MIN_CONFIDENCE)
     .order('confidence', { ascending: false })
     .limit(limit)
-  if (error) throw error
+  // Fallback ke view v1 jika v2 belum ada (belum apply schema additions)
+  if (error) {
+    const { data: d2, error: e2 } = await supabase
+      .from('v_latest_signals')
+      .select('*')
+      .gte('confidence', MIN_CONFIDENCE)
+      .order('confidence', { ascending: false })
+      .limit(limit)
+    if (e2) throw e2
+    return d2
+  }
   return data
 }
 
 export async function getSignalsByTicker(ticker) {
   const { data, error } = await supabase
     .from('signals')
-    .select('*')
+    .select('*, phase, cacing_score, macro_flag, fomo_penalty')
     .eq('ticker', ticker)
     .gte('confidence', MIN_CONFIDENCE)
     .order('created_at', { ascending: false })
@@ -93,7 +104,17 @@ export async function getAccuracy() {
   return data
 }
 
-// ── System Config ────────────────────────────────────────────
+export async function getSignalHistory(limit = 30) {
+  const { data, error } = await supabase
+    .from('signal_history')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return data
+}
+
+// ── System Config ─────────────────────────────────────────────
 export async function getConfig(key) {
   const { data, error } = await supabase
     .from('system_config')
@@ -102,4 +123,38 @@ export async function getConfig(key) {
     .single()
   if (error) throw error
   return data?.value
+}
+
+// ── [v2.0] Macro Events ───────────────────────────────────────
+export async function getActiveMacroEvents() {
+  const { data, error } = await supabase
+    .from('v_active_macro_events')
+    .select('*')
+    .limit(5)
+  if (error) return []   // tabel belum ada = kembalikan kosong (graceful)
+  return data
+}
+
+// ── [v2.0] Phase History ──────────────────────────────────────
+export async function getPhaseForTicker(ticker) {
+  const { data, error } = await supabase
+    .from('phase_history')
+    .select('phase, cacing_score, naga_score, detected_at')
+    .eq('ticker', ticker)
+    .order('detected_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) return null
+  return data
+}
+
+// ── [v2.0] Broker Flow ────────────────────────────────────────
+export async function getBrokerFlowRecent() {
+  const { data, error } = await supabase
+    .from('v_broker_flow_recent')
+    .select('*')
+    .eq('is_accumulation_pattern', true)
+    .limit(10)
+  if (error) return []
+  return data
 }

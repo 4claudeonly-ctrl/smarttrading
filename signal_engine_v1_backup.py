@@ -4,23 +4,16 @@ signal_engine.py — SmartTrading Core Signal Engine
 Arsitektur  : Zero-Cost (yfinance + pandas-ta + Groq API + Supabase)
 Dijadwalkan : GitHub Actions cron */15 market hours (WIB 09:00-15:30)
 Output      : INSERT ke tabel `signals` di Supabase
-Versi       : 2.0 | 03 Apr 2026  [PATCHED: 4-komponen scoring]
+Versi       : 1.0 | 01 Apr 2026
 
-Pipeline v2.0:
+Pipeline:
   1. Ambil daftar ticker dari Supabase (emiten_meta, is_active=True)
   2. Fetch OHLCV 60 hari via yfinance
   3. Hitung 6 indikator teknikal via pandas-ta
-  4. [NEW] Deteksi fase cacing/naga via phase_detector
-  5. [NEW] Evaluasi macro trigger via macro_trigger
-  6. [NEW] Analisis broker flow via broker_flow
-  7. Scoring 4-komponen: 35% teknikal + 25% fase + 20% sentimen + 20% macro
-  8. Filter confidence >= MIN_CONFIDENCE (70%)
-  9. Groq LLM generate narasi bahasa manusia
-  10. INSERT ke tabel signals (+ kolom baru: phase, cacing_score, macro_flag, fomo_penalty)
-
-Scoring Formula:
-  confidence = (teknikal*0.35 + fase*0.25 + sentimen*0.20 + macro*0.20)
-  Guardrail: DISTRIBUSI<=60 | DUMP<=20 | SHORT_REPORT=0 | FOMO-=15
+  4. Scoring deterministik -> BUY/HOLD/SELL + confidence
+  5. Filter confidence >= MIN_CONFIDENCE (70%)
+  6. Groq LLM generate narasi bahasa manusia
+  7. INSERT ke tabel signals + news_cache
 """
 
 import os
@@ -36,19 +29,6 @@ import pandas_ta as ta
 import requests
 from supabase import create_client, Client
 
-# [v2.0] Import modul backend expansion
-import sys as _sys
-_sys.path.insert(0, r'C:\FOLDER4CLAUDE\smarttrading')
-try:
-    from phase_detector import classify_phase, cacing_score_calc, naga_score_calc, apply_phase_to_confidence
-    from macro_trigger import evaluate_macro_context, MacroEvent
-    from broker_flow import analyze_broker_flow
-    _MODULES_LOADED = True
-    log_pre = "phase_detector + macro_trigger + broker_flow LOADED"
-except ImportError as _e:
-    _MODULES_LOADED = False
-    log_pre = f"WARNING: modul baru tidak ditemukan ({_e}) — fallback ke scoring v1.0"
-
 # ── Logging setup ──────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
@@ -56,9 +36,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 log = logging.getLogger("signal_engine")
-
-# Log status modul v2.0 (dievaluasi setelah import)
-# (log_pre diset saat import modul, diprint saat engine start)
 
 # ══════════════════════════════════════════════════════════════
 # KONFIGURASI — semua dari environment variables (GitHub Secrets)
@@ -177,26 +154,17 @@ def calculate_indicators(df: pd.DataFrame) -> dict:
 # Logika: setiap kondisi memberi poin +/-, total -> signal + confidence
 # ══════════════════════════════════════════════════════════════
 
-def score_signal(
-    ind: dict,
-    phase_result: dict | None = None,
-    macro_result: dict | None = None,
-    sentiment_score: float | None = None,
-) -> tuple[str, float, dict]:
+def score_signal(ind: dict) -> tuple[str, float, dict]:
     """
-    Scoring 4-komponen v2.0:
-      35% teknikal (RSI, MACD, EMA, BB, Volume, Momentum)
-      25% fase cacing/naga (phase_detector)
-      20% sentimen Groq news (dari news_cache aggregate)
-      20% macro trigger (macro_trigger)
-
-    Guardrail:
-      - fase DISTRIBUSI -> hard cap confidence 60
-      - fase DUMP       -> hard cap confidence 20
-      - short_report    -> override confidence = 0
-      - FOMO >5k mention -> minus 15 poin
-
+    Scoring berbasis 6 faktor teknikal.
     Return: (signal_type, confidence_pct, score_breakdown)
+
+    Sistem poin:
+      Setiap faktor menghasilkan +1 (bullish), 0 (netral), atau -1 (bearish)
+      Total skor -6 s/d +6 -> dinormalisasi ke confidence 0-100
+      >= +2  -> BUY
+      <= -2  -> SELL
+      antara -> HOLD
     """
     scores = {}
 
@@ -259,10 +227,10 @@ def score_signal(
     else:
         scores["momentum"] = 0
 
-    # ── Kalkulasi total teknikal & signal awal ─────────────
+    # ── Kalkulasi total & signal ───────────────────────────
     total = sum(scores.values())           # -6 s/d +6
-    teknikal_conf = round(50 + (total / 6) * 50, 1)   # normalisasi ke 0-100
-    teknikal_conf = max(0.0, min(100.0, teknikal_conf))
+    confidence = round(50 + (total / 6) * 50, 1)   # normalisasi ke 0-100
+    confidence = max(0.0, min(100.0, confidence))
 
     if total >= 2:
         signal_type = "BUY"
@@ -270,71 +238,6 @@ def score_signal(
         signal_type = "SELL"
     else:
         signal_type = "HOLD"
-
-    # ── [v2.0] 4-Komponen Scoring ───────────────────────────
-    # Komponen 1: Teknikal (35%) — sudah dihitung di atas
-    w_teknikal = teknikal_conf * 0.35
-
-    # Komponen 2: Fase Cacing/Naga (25%)
-    fase_conf = 50.0   # default netral
-    fase_label = "UNKNOWN"
-    cacing_score = 0.0
-    fomo_penalty = 0
-    if _MODULES_LOADED and phase_result:
-        fase_label = phase_result.get("phase", "UNKNOWN")
-        cacing_score = float(phase_result.get("cacing_score", 0.0))
-        naga_score   = float(phase_result.get("naga_score",  0.0))
-        # AKUMULASI -> bullish boost, DISTRIBUSI -> bearish, DUMP -> sangat bearish
-        if fase_label == "AKUMULASI":
-            fase_conf = 50 + cacing_score * 50      # 50-100
-        elif fase_label == "DISTRIBUSI":
-            fase_conf = 50 - naga_score * 30        # 20-50
-        elif fase_label == "DUMP":
-            fase_conf = 20.0
-        else:
-            fase_conf = 50.0
-        # FOMO penalty
-        fomo_mention = phase_result.get("fomo_mention_count", 0)
-        if fomo_mention > 5000:
-            fomo_penalty = 15
-    w_fase = fase_conf * 0.25
-
-    # Komponen 3: Sentimen Groq (20%)
-    sentimen_conf = sentiment_score if sentiment_score is not None else 50.0
-    w_sentimen = sentimen_conf * 0.20
-
-    # Komponen 4: Macro Trigger (20%)
-    macro_conf = 50.0
-    macro_flag = []
-    if _MODULES_LOADED and macro_result:
-        macro_conf = float(macro_result.get("macro_conf", 50.0))
-        macro_flag = macro_result.get("flags", [])
-    w_macro = macro_conf * 0.20
-
-    # ── Gabungkan + guardrail ────────────────────────────────
-    confidence = round(w_teknikal + w_fase + w_sentimen + w_macro - fomo_penalty, 1)
-    confidence = max(0.0, min(100.0, confidence))
-
-    # Guardrail keras berdasarkan fase
-    if fase_label == "DISTRIBUSI":
-        confidence = min(confidence, 60.0)
-    elif fase_label == "DUMP":
-        confidence = min(confidence, 20.0)
-
-    # Override khusus: SHORT_REPORT -> confidence = 0
-    if "SHORT_REPORT" in macro_flag:
-        confidence = 0.0
-        signal_type = "SELL"
-
-    # Simpan breakdown lengkap
-    scores["_fase"]        = fase_label
-    scores["_cacing_score"] = round(cacing_score, 3)
-    scores["_macro_flag"]  = macro_flag
-    scores["_fomo_penalty"] = fomo_penalty
-    scores["_teknikal_conf"] = round(teknikal_conf, 1)
-    scores["_fase_conf"]   = round(fase_conf, 1)
-    scores["_sentimen_conf"] = round(sentimen_conf, 1)
-    scores["_macro_conf"]  = round(macro_conf, 1)
 
     return signal_type, confidence, scores
 
@@ -425,12 +328,6 @@ def write_signal_to_db(
     expires_at = datetime.now(IDX_TZ) + timedelta(hours=SIGNAL_TTL_HOURS)
     # Estimasi range harga: ±2% dari harga saat ini
     price = ind["close"]
-    # [v2.0] Ekstrak field baru dari scores breakdown
-    _fase_label    = scores.get("_fase", "UNKNOWN")
-    _cacing_score  = scores.get("_cacing_score", 0.0)
-    _macro_flag    = scores.get("_macro_flag", [])
-    _fomo_penalty  = scores.get("_fomo_penalty", 0)
-
     payload = {
         "ticker":          ticker,
         "signal_type":     signal_type,
@@ -443,11 +340,6 @@ def write_signal_to_db(
         "indicators":      ind,
         "timeframe":       "SWING",
         "expires_at":      expires_at.isoformat(),
-        # [v2.0] kolom baru dari backend expansion
-        "phase":           _fase_label,
-        "cacing_score":    _cacing_score,
-        "macro_flag":      _macro_flag,
-        "fomo_penalty":    _fomo_penalty,
     }
     try:
         supabase.table("signals").insert(payload).execute()
@@ -465,8 +357,7 @@ def run_signal_engine():
     Entry point utama — dipanggil oleh GitHub Actions cron.
     Jalankan pipeline lengkap untuk semua ticker aktif.
     """
-    log.info("=== Signal Engine START === [v2.0 — 4-komponen scoring]")
-    log.info(f"Modul status: {log_pre}")
+    log.info("=== Signal Engine START ===")
 
     if not is_market_open():
         log.info("Pasar BEI tutup — engine tidak dijalankan.")
@@ -493,73 +384,8 @@ def run_signal_engine():
             # 2. Hitung indikator
             ind = calculate_indicators(df)
 
-            # 3a. [v2.0] Fetch phase_detector input
-            phase_result = None
-            if _MODULES_LOADED:
-                try:
-                    # Ambil vol series 30 hari terakhir
-                    vol_series = df["volume"].tail(30).tolist()
-                    price_change_30d = float(
-                        (df["close"].iloc[-1] - df["close"].iloc[-30]) / df["close"].iloc[-30] * 100
-                    ) if len(df) >= 30 else 0.0
-                    phase_result = classify_phase(
-                        vol_series=vol_series,
-                        rsi=ind["rsi"],
-                        price_change_30d=price_change_30d
-                    )
-                    # Tambah cacing/naga score ke phase_result
-                    phase_result["cacing_score"] = cacing_score_calc(
-                        vol_series=vol_series,
-                        rsi=ind["rsi"],
-                        price_change_30d=price_change_30d
-                    )
-                    phase_result["naga_score"] = naga_score_calc(
-                        vol_series=vol_series,
-                        rsi=ind["rsi"],
-                        price_change_30d=price_change_30d
-                    )
-                except Exception as _ep:
-                    log.warning(f"  phase_detector error {ticker}: {_ep}")
-
-            # 3b. [v2.0] Fetch macro trigger
-            macro_result = None
-            if _MODULES_LOADED:
-                try:
-                    # Ambil berita terbaru dari Supabase untuk ticker ini
-                    news_resp = (
-                        supabase.table("news_cache")
-                        .select("title,sentiment,relevance")
-                        .eq("ticker", ticker)
-                        .order("published_at", desc=True)
-                        .limit(20)
-                        .execute()
-                    )
-                    news_items = news_resp.data or []
-                    macro_result = evaluate_macro_context(
-                        ticker=ticker,
-                        news_items=news_items
-                    )
-                    # Hitung sentimen aggregate dari news
-                    if news_items:
-                        pos = sum(1 for n in news_items if n.get("sentiment") == "POSITIVE")
-                        neg = sum(1 for n in news_items if n.get("sentiment") == "NEGATIVE")
-                        total_news = len(news_items)
-                        sentiment_score = round(50 + (pos - neg) / total_news * 50, 1)
-                    else:
-                        sentiment_score = 50.0
-                except Exception as _em:
-                    log.warning(f"  macro_trigger error {ticker}: {_em}")
-                    sentiment_score = 50.0
-            else:
-                sentiment_score = 50.0
-
-            # 3. Scoring 4-komponen
-            signal_type, confidence, scores = score_signal(
-                ind,
-                phase_result=phase_result,
-                macro_result=macro_result,
-                sentiment_score=sentiment_score,
-            )
+            # 3. Scoring
+            signal_type, confidence, scores = score_signal(ind)
             stats["processed"] += 1
 
             # 4. Filter confidence minimum (NFR-008)
