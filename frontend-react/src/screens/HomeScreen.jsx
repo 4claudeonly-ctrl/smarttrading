@@ -3,117 +3,155 @@ import { TopBar, LiveDot } from '../components/TopBar'
 import SignalCard from '../components/SignalCard'
 import { getLatestSignals, getActiveMacroEvents } from '../lib/api'
 
-const MARKET = [
-  { label: 'IHSG',    value: '7.124',  chg: '-1.82%', neg: true },
-  { label: 'USD/IDR', value: '16.340', chg: '+0.43%', neg: true },
-  { label: 'Emas/gr', value: '1.892K', chg: '+0.71%', neg: false },
-]
+const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// Warna severity untuk macro event banner
 const severityStyle = {
   HIGH:   { bg: '#2E0A0D', border: '#FF4455', color: '#FF4455', text: '#C47A7E' },
   MEDIUM: { bg: '#2E1A00', border: '#F5A623', color: '#F5A623', text: '#C4967A' },
   LOW:    { bg: '#0A1E14', border: '#00C896', color: '#00C896', text: '#7AC4A8' },
 }
 
+async function fetchMarketData() {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/get-market-data`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
+    body: JSON.stringify({}),
+  })
+  const json = await res.json()
+  return json.success ? json.data : null
+}
+
+function fmt(val, decimals = 2) {
+  if (val == null) return '–'
+  return typeof val === 'number' ? val.toFixed(decimals) : val
+}
+function fmtChg(pct) {
+  if (pct == null) return '–'
+  return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`
+}
+
 export default function HomeScreen() {
-  const [signals,      setSignals]      = useState([])
-  const [macroEvents,  setMacroEvents]  = useState([])
-  const [loading,      setLoading]      = useState(true)
+  const [signals,     setSignals]     = useState([])
+  const [macroEvents, setMacroEvents] = useState([])
+  const [market,      setMarket]      = useState(null)
+  const [loading,     setLoading]     = useState(true)
+  const [mktLoading,  setMktLoading]  = useState(true)
 
   useEffect(() => {
-    // Fetch signals + macro events paralel
     Promise.all([
       getLatestSignals(10).catch(() => []),
       getActiveMacroEvents().catch(() => []),
     ]).then(([sigs, events]) => {
-      setSignals(sigs)
-      setMacroEvents(events)
+      setSignals(sigs); setMacroEvents(events)
     }).finally(() => setLoading(false))
+
+    fetchMarketData()
+      .then(d => setMarket(d))
+      .catch(() => {})
+      .finally(() => setMktLoading(false))
   }, [])
 
-  // Tentukan apakah perlu banner defense (IHSG < -1% ATAU ada macro HIGH)
+  // Defense banner logic: IHSG turun > 1% ATAU ada HIGH macro event
+  const ihsgChg    = market?.ihsg?.changePct ?? 0
   const hasHighMacro = macroEvents.some(e => e.severity === 'HIGH')
-  const showDefense  = true // TODO: connect ke live IHSG delta
+  const showDefense  = ihsgChg < -1 || hasHighMacro
+
+  // Market bar data dari live API
+  const MARKET = market ? [
+    {
+      label: 'IHSG',
+      value: market.ihsg?.price ? market.ihsg.price.toLocaleString('id-ID', {maximumFractionDigits: 0}) : '–',
+      chg:   fmtChg(market.ihsg?.changePct),
+      neg:   (market.ihsg?.changePct ?? 0) < 0,
+    },
+    {
+      label: 'USD/IDR',
+      value: market.usdidr?.price ? market.usdidr.price.toLocaleString('id-ID', {maximumFractionDigits: 0}) : '–',
+      chg:   fmtChg(market.usdidr?.changePct),
+      neg:   (market.usdidr?.changePct ?? 0) > 0, // IDR melemah = negatif
+    },
+    {
+      label: 'Emas/oz',
+      value: market.emas?.price ? `$${market.emas.price.toLocaleString('en-US', {maximumFractionDigits: 0})}` : '–',
+      chg:   fmtChg(market.emas?.changePct),
+      neg:   (market.emas?.changePct ?? 0) < 0,
+    },
+  ] : [
+    { label: 'IHSG',    value: '–', chg: '–', neg: false },
+    { label: 'USD/IDR', value: '–', chg: '–', neg: false },
+    { label: 'Emas/oz', value: '–', chg: '–', neg: false },
+  ]
 
   return (
     <div style={{ paddingBottom: 80 }}>
       <TopBar right={<><LiveDot />Live</>} />
 
-      {/* ── Defense / Macro Banners ── */}
-      {macroEvents.length > 0
-        ? macroEvents.slice(0, 2).map((ev, i) => {
-            const s = severityStyle[ev.severity] || severityStyle.MEDIUM
-            return (
-              <div key={i} style={{
-                background: s.bg, borderLeft: `3px solid ${s.border}`,
-                margin: i === 0 ? '12px 12px 4px' : '0 12px 4px',
-                borderRadius: 8, padding: '9px 12px',
-              }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: s.color, marginBottom: 2 }}>
-                  {ev.event_label}
-                </div>
-                <div style={{ fontSize: 10, color: s.text, lineHeight: 1.5 }}>
-                  {ev.affected_sectors?.length
-                    ? `Sektor terdampak: ${ev.affected_sectors.join(', ')}`
-                    : 'Perhatikan kondisi makro sebelum entry posisi baru.'}
-                </div>
-              </div>
-            )
-          })
-        : showDefense && (
-          <div style={{
-            background: '#2D0A0D', borderLeft: '3px solid #FF4455',
-            margin: 12, borderRadius: 8, padding: '10px 12px',
-          }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#FF4455', marginBottom: 3 }}>
-              Kondisi pasar waspada
+      {/* ── Defense Banner ── */}
+      {showDefense && !macroEvents.length && (
+        <div style={{ background:'#2E0A0D', borderLeft:'3px solid #FF4455',
+          margin:'12px 12px 4px', padding:'10px 12px', borderRadius:8 }}>
+          <div style={{ color:'#FF4455', fontSize:11, fontWeight:700, marginBottom:3 }}>
+            ⚠️ DEFENSE MODE
+          </div>
+          <div style={{ color:'#C47A7E', fontSize:11, lineHeight:1.6 }}>
+            IHSG turun {Math.abs(ihsgChg).toFixed(2)}%. Hindari posisi baru, prioritaskan lindung nilai.
+          </div>
+        </div>
+      )}
+
+      {/* ── Macro Event Banners ── */}
+      {macroEvents.slice(0, 2).map((ev, i) => {
+        const s = severityStyle[ev.severity] || severityStyle.MEDIUM
+        return (
+          <div key={i} style={{ background:s.bg, borderLeft:`3px solid ${s.border}`,
+            margin: i===0 ? '12px 12px 4px' : '0 12px 4px',
+            padding:'10px 12px', borderRadius:8 }}>
+            <div style={{ color:s.color, fontSize:11, fontWeight:700, marginBottom:3 }}>
+              {ev.severity === 'HIGH' ? '🚨' : ev.severity === 'MEDIUM' ? '⚡' : 'ℹ️'} {ev.title}
             </div>
-            <div style={{ fontSize: 11, color: '#C47A7E', lineHeight: 1.5 }}>
-              IHSG turun 1.8% hari ini. Pertimbangkan menahan posisi baru sampai kondisi stabil.
-            </div>
+            <div style={{ color:s.text, fontSize:11, lineHeight:1.6 }}>{ev.description}</div>
           </div>
         )
-      }
+      })}
 
-      <div style={{ padding: '14px 16px 0' }}>
+      {/* ── Market Ticker ── */}
+      <div style={{ display:'flex', gap:0, padding:'10px 12px 6px',
+        overflowX:'auto', borderBottom:'1px solid var(--border)' }}>
+        {MARKET.map(({ label, value, chg, neg }) => (
+          <div key={label} style={{ flex:'0 0 auto', marginRight:20 }}>
+            <div style={{ fontSize:9, color:'var(--muted)', marginBottom:2, textTransform:'uppercase',
+              letterSpacing:'0.08em' }}>{label}</div>
+            <div style={{ fontFamily:'var(--mono)', fontSize:13, fontWeight:600,
+              color: mktLoading ? 'var(--muted)' : 'var(--text)' }}>{value}</div>
+            <div style={{ fontFamily:'var(--mono)', fontSize:10,
+              color: neg ? '#FF4455' : '#00C896' }}>{chg}</div>
+          </div>
+        ))}
+      </div>
 
-        {/* ── Market Pulse ── */}
-        <div className="section-label">Market Pulse</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
-          {MARKET.map(m => (
-            <div key={m.label} className="card" style={{ padding: '10px 12px' }}>
-              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4 }}>{m.label}</div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 500 }}>{m.value}</div>
-              <div style={{
-                fontFamily: 'var(--mono)', fontSize: 10, marginTop: 2,
-                color: m.neg ? '#FF4455' : '#00C896',
-              }}>{m.chg}</div>
-            </div>
-          ))}
+      {/* ── Signal Cards ── */}
+      <div style={{ padding:'10px 12px 0' }}>
+        <div style={{ fontSize:10, color:'var(--muted)', fontWeight:600,
+          letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:8 }}>
+          Top Picks Hari Ini
         </div>
 
-        {/* ── Top Picks ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <div className="section-label" style={{ marginBottom: 0 }}>Top Picks Hari Ini</div>
-          {signals.length > 0 && (
-            <span style={{ fontSize: 10, color: 'var(--muted)' }}>
-              {signals.filter(s => s.signal_type === 'BUY').length} BUY ·{' '}
-              {signals.filter(s => s.signal_type === 'SELL').length} SELL
-            </span>
-          )}
-        </div>
-
-        {loading
-          ? <div style={{ color: 'var(--muted)', fontSize: 12, padding: '20px 0', textAlign: 'center' }}>
-              Memuat sinyal...
+        {loading ? (
+          <div style={{ padding:'40px 0', textAlign:'center', color:'var(--muted)', fontSize:12 }}>
+            ⏳ Memuat sinyal...
+          </div>
+        ) : signals.length === 0 ? (
+          <div style={{ padding:'40px 0', textAlign:'center' }}>
+            <div style={{ fontSize:28, marginBottom:8 }}>📡</div>
+            <div style={{ color:'var(--muted)', fontSize:12, marginBottom:4 }}>Belum ada sinyal hari ini</div>
+            <div style={{ color:'var(--muted)', fontSize:10, opacity:0.6, lineHeight:1.7 }}>
+              Signal Engine berjalan setiap 15 menit<br/>saat jam bursa aktif (09:00–15:45 WIB)
             </div>
-          : signals.length
-            ? signals.map(s => <SignalCard key={s.id} signal={s} />)
-            : <div style={{ color: 'var(--muted)', fontSize: 12, padding: '20px 0', textAlign: 'center' }}>
-                Belum ada sinyal hari ini
-              </div>
-        }
+          </div>
+        ) : (
+          signals.map(sig => <SignalCard key={sig.id ?? sig.ticker} signal={sig} />)
+        )}
       </div>
     </div>
   )

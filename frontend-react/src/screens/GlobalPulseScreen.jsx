@@ -1,80 +1,172 @@
-import { TopBar, LiveDot } from '../components/TopBar'
-import { getGlobalNews } from '../lib/api'
 import { useState, useEffect } from 'react'
+import { TopBar } from '../components/TopBar'
 
-const SCORE = 47
+const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+async function fetchMarketData() {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/get-market-data`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
+    body: JSON.stringify({}),
+  })
+  const json = await res.json()
+  return json.success ? json.data : null
+}
+
+function fmtChg(pct) {
+  if (pct == null) return '–'
+  return `${pct > 0 ? '+' : ''}${Number(pct).toFixed(2)}%`
+}
+function fmtPrice(p, prefix = '') {
+  if (p == null) return '–'
+  return `${prefix}${Number(p).toLocaleString('en-US')}`
+}
+
+// Fear & Greed gauge SVG
+function FearGreedGauge({ score, label }) {
+  const angle = score != null ? -90 + (score / 100) * 180 : -90
+  const col = score >= 75 ? '#00C896' : score >= 55 ? '#7BC97A' : score >= 45 ? '#F5A623' : score >= 25 ? '#E07A30' : '#FF4455'
+  const r = 60, cx = 80, cy = 75
+  const toRad = d => d * Math.PI / 180
+  const arcX = (deg) => cx + r * Math.cos(toRad(deg - 180))
+  const arcY = (deg) => cy - r * Math.sin(toRad(deg - 180))
+  const needleX = cx + (r - 8) * Math.cos(toRad(angle - 180))
+  const needleY = cy - (r - 8) * Math.sin(toRad(angle - 180))
+  return (
+    <svg viewBox="0 0 160 95" style={{ width: '100%', maxWidth: 200 }}>
+      {/* track */}
+      <path d={`M ${arcX(0)} ${arcY(0)} A ${r} ${r} 0 0 1 ${arcX(180)} ${arcY(180)}`}
+        fill="none" stroke="#252D3D" strokeWidth="12" strokeLinecap="round"/>
+      {/* fill */}
+      {score != null && (
+        <path d={`M ${arcX(0)} ${arcY(0)} A ${r} ${r} 0 0 1 ${arcX(score * 1.8)} ${arcY(score * 1.8)}`}
+          fill="none" stroke={col} strokeWidth="12" strokeLinecap="round"/>
+      )}
+      {/* needle */}
+      <line x1={cx} y1={cy} x2={needleX} y2={needleY}
+        stroke={col} strokeWidth="2.5" strokeLinecap="round"/>
+      <circle cx={cx} cy={cy} r="4" fill={col}/>
+      {/* labels */}
+      <text x={cx} y={cy + 18} textAnchor="middle" fill={col}
+        fontSize="16" fontWeight="bold" fontFamily="JetBrains Mono, monospace">
+        {score ?? '–'}
+      </text>
+      <text x={cx} y={cy + 30} textAnchor="middle" fill={col} fontSize="7.5">
+        {label ?? 'Loading...'}
+      </text>
+    </svg>
+  )
+}
+
+function CryptoRow({ name, price, changePct, prefix = '$' }) {
+  const pos = (changePct ?? 0) >= 0
+  return (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
+      padding:'10px 0', borderBottom:'1px solid var(--border)' }}>
+      <span style={{ fontSize:13, fontWeight:600 }}>{name}</span>
+      <div style={{ textAlign:'right' }}>
+        <div style={{ fontFamily:'var(--mono)', fontSize:14, fontWeight:700 }}>
+          {fmtPrice(price, prefix)}
+        </div>
+        <div style={{ fontFamily:'var(--mono)', fontSize:11,
+          color: pos ? '#00C896' : '#FF4455' }}>{fmtChg(changePct)}</div>
+      </div>
+    </div>
+  )
+}
 
 export default function GlobalPulseScreen() {
-  const [news, setNews] = useState([])
-  useEffect(() => { getGlobalNews(6).then(setNews).catch(() => {}) }, [])
+  const [data,    setData]    = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error,   setError]   = useState(null)
+  const [lastUpd, setLastUpd] = useState(null)
 
-  const pct    = SCORE / 100
-  const arcLen = 251.3
-  const offset = arcLen * (1 - pct)
-  const needle = -90 + pct * 180
-  const fgCol  = SCORE <= 25 ? '#FF4455' : SCORE <= 45 ? '#FF8C42' : SCORE <= 55 ? '#F5A623' : '#00C896'
-  const fgLbl  = SCORE <= 25 ? 'Extreme Fear' : SCORE <= 45 ? 'Fear' : SCORE <= 55 ? 'Neutral' : SCORE <= 75 ? 'Greed' : 'Extreme Greed'
+  const load = () => {
+    setLoading(true); setError(null)
+    fetchMarketData()
+      .then(d => { setData(d); setLastUpd(new Date()) })
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [])
+
+  const fng   = data?.fear_greed
+  const btc   = data?.btc
+  const eth   = data?.eth
+  const ihsg  = data?.ihsg
+  const usdidr = data?.usdidr
+  const emas  = data?.emas
 
   return (
     <div style={{ paddingBottom: 80 }}>
-      <TopBar right={<><LiveDot />Global Pulse</>} />
+      <TopBar right="Global Pulse" />
 
-      <div style={{ padding: '14px 16px 0' }}>
-        <div className="section-label">Kripto Utama</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+      {/* Header + refresh */}
+      <div style={{ padding:'10px 16px 6px', display:'flex',
+        justifyContent:'space-between', alignItems:'center' }}>
+        <span style={{ fontSize:10, color:'var(--muted)' }}>
+          {loading ? 'Memuat...' : lastUpd ? `Update: ${lastUpd.toLocaleTimeString('id-ID')}` : ''}
+          {data?.cached ? ' · cache' : ''}
+        </span>
+        <button onClick={load} disabled={loading}
+          style={{ background:'transparent', border:'1px solid var(--border)',
+            color:'var(--muted)', borderRadius:6, padding:'4px 10px',
+            cursor:'pointer', fontSize:10 }}>
+          {loading ? '⏳' : '↻ Refresh'}
+        </button>
+      </div>
+
+      {error && (
+        <div style={{ margin:'8px 16px', padding:10, background:'#2E0A0D',
+          border:'1px solid #FF4455', borderRadius:8, fontSize:11, color:'#C47A7E' }}>
+          ⚠️ Gagal memuat data: {error}
+        </div>
+      )}
+
+      <div style={{ padding:'0 16px' }}>
+
+        {/* ── Fear & Greed ── */}
+        <div className="card" style={{ marginBottom:12, textAlign:'center', paddingTop:16 }}>
+          <div className="section-label" style={{ textAlign:'left' }}>Fear & Greed Index — Kripto Global</div>
+          <div style={{ display:'flex', justifyContent:'center', margin:'8px 0 0' }}>
+            <FearGreedGauge score={fng?.score} label={fng?.label} />
+          </div>
+          <div style={{ display:'flex', justifyContent:'space-between', fontSize:9,
+            color:'var(--muted)', padding:'0 8px 8px', marginTop:4 }}>
+            <span>Extreme Fear</span><span>Fear</span>
+            <span>Netral</span><span>Greed</span><span>Extreme Greed</span>
+          </div>
+        </div>
+
+        {/* ── Crypto Prices ── */}
+        <div className="card" style={{ marginBottom:12 }}>
+          <div className="section-label">Harga Kripto (USD)</div>
+          <CryptoRow name="Bitcoin (BTC)"  price={btc?.price}  changePct={btc?.changePct}  />
+          <CryptoRow name="Ethereum (ETH)" price={eth?.price}  changePct={eth?.changePct}  />
+        </div>
+
+        {/* ── Indikator Makro IDX ── */}
+        <div className="card" style={{ marginBottom:12 }}>
+          <div className="section-label">Indikator Makro Indonesia</div>
           {[
-            { sym: 'BTC', price: '$82.340', chg: '+2.14%', pos: true, whale: 'Netral' },
-            { sym: 'ETH', price: '$1.812',  chg: '-1.38%', pos: false, whale: 'Jual'  },
-          ].map(c => (
-            <div key={c.sym} className="card">
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 600, color: c.pos ? '#00C896' : '#FF4455', marginBottom: 4 }}>{c.sym}/USD</div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 17, fontWeight: 500, color: c.pos ? '#00C896' : '#FF4455' }}>{c.price}</div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: c.pos ? '#00C896' : '#FF4455', margin: '3px 0 8px' }}>{c.chg}</div>
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, fontSize: 10, color: 'var(--muted)' }}>
-                Sinyal whale: <span style={{ color: c.whale === 'Jual' ? '#FF4455' : '#F5A623' }}>{c.whale}</span>
+            ['IHSG',    ihsg?.price  ? ihsg.price.toLocaleString('id-ID',{maximumFractionDigits:0})  : '–', ihsg?.changePct],
+            ['USD/IDR', usdidr?.price ? usdidr.price.toLocaleString('id-ID',{maximumFractionDigits:0}) : '–', usdidr?.changePct],
+            ['Emas (Rp/oz)', emas?.price ? `$${emas.price.toLocaleString('en-US',{maximumFractionDigits:0})}` : '–', emas?.changePct],
+          ].map(([lbl, val, chg]) => (
+            <div key={lbl} style={{ display:'flex', justifyContent:'space-between',
+              alignItems:'center', padding:'9px 0', borderBottom:'1px solid var(--border)' }}>
+              <span style={{ fontSize:12 }}>{lbl}</span>
+              <div style={{ textAlign:'right' }}>
+                <div style={{ fontFamily:'var(--mono)', fontSize:13, fontWeight:600 }}>{val}</div>
+                <div style={{ fontFamily:'var(--mono)', fontSize:10,
+                  color: chg >= 0 ? '#00C896' : '#FF4455' }}>{fmtChg(chg)}</div>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="section-label">Fear &amp; Greed Index</div>
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: 14 }}>
-          <svg width="200" height="110" viewBox="0 0 200 110">
-            <defs>
-              <linearGradient id="gGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#FF4455" />
-                <stop offset="50%" stopColor="#F5A623" />
-                <stop offset="100%" stopColor="#00C896" />
-              </linearGradient>
-            </defs>
-            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#252D3D" strokeWidth="14" strokeLinecap="round" />
-            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gGrad)" strokeWidth="14" strokeLinecap="round"
-              strokeDasharray={arcLen} strokeDashoffset={offset} />
-            <line x1="100" y1="100" x2="100" y2="28" stroke="#EDF2FF" strokeWidth="2.5" strokeLinecap="round"
-              transform={`rotate(${needle}, 100, 100)`} />
-            <circle cx="100" cy="100" r="5" fill="#EDF2FF" />
-          </svg>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 28, fontWeight: 600, color: fgCol }}>{SCORE}</div>
-          <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3 }}>{fgLbl}</div>
-        </div>
-
-        <div className="section-label" style={{ marginTop: 14 }}>Berita Global</div>
-        {news.length
-          ? news.map(n => (
-            <div key={n.id} className="card">
-              <div style={{ fontSize: 12, color: '#C8D4E8', lineHeight: 1.5, marginBottom: 5 }}>{n.title}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 10, color: 'var(--muted)' }}>{n.source}</span>
-                <span style={{
-                  fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 3,
-                  background: n.sentiment === 'POSITIVE' ? '#0A2E22' : n.sentiment === 'NEGATIVE' ? '#2E0A0D' : '#1E1500',
-                  color: n.sentiment === 'POSITIVE' ? '#00C896' : n.sentiment === 'NEGATIVE' ? '#FF4455' : '#F5A623',
-                }}>{n.sentiment}</span>
-              </div>
-            </div>
-          ))
-          : <div style={{ color: 'var(--muted)', fontSize: 12, padding: '20px 0', textAlign: 'center' }}>Memuat berita global...</div>
-        }
       </div>
     </div>
   )
