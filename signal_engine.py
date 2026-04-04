@@ -37,8 +37,6 @@ import requests
 from supabase import create_client, Client
 
 # [v2.0] Import modul backend expansion
-import sys as _sys
-_sys.path.insert(0, r'C:\FOLDER4CLAUDE\smarttrading')
 try:
     from phase_detector import classify_phase, cacing_score_calc, naga_score_calc, apply_phase_to_confidence
     from macro_trigger import evaluate_macro_context, MacroEvent
@@ -99,7 +97,7 @@ def get_active_tickers(limit: int = MAX_TICKERS_RUN) -> list[str]:
         supabase.table("emiten_meta")
         .select("ticker, market_cap_tier")
         .eq("is_active", True)
-        .order("market_cap_tier")     # LQ45 < IDX80 < SMALL < MICRO
+        .order("is_active", desc=True)   # aktif dulu, LQ45 first via market_cap_tier ordering done in app
         .limit(limit)
         .execute()
     )
@@ -391,7 +389,7 @@ Tulis dalam Bahasa Indonesia yang natural."""
         payload = {
             "model": GROQ_MODEL,
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 300,
+            "max_tokens": 600,
             "temperature": 0.4,
         }
         resp = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=15)
