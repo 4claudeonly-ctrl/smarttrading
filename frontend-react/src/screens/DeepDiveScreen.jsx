@@ -1,7 +1,21 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { TopBar } from '../components/TopBar'
-import { getSignalsByTicker, getNewsByTicker, callAnalyzeTicker } from '../lib/api'
+import { getSignalsByTicker, getNewsByTicker } from '../lib/api'
+
+const SUPABASE_URL = 'https://yflisnaaeqfzeyzmgymm.supabase.co'
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbGlzbmFhZXFmemV5em1neW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMzYyMzMsImV4cCI6MjA5MDgxMjIzM30.UKP1nDbaSulsKdki8E4Ig1U-ZNu5hDRe6vOwczduw_w'
+
+async function analyzeTicker(ticker) {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/analyze-ticker`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
+    body: JSON.stringify({ ticker }),
+  })
+  const json = await res.json()
+  if (!json.success) throw new Error(json.error || 'Analisis gagal')
+  return json.data
+}
 
 function SignalBadge({ type }) {
   const col = type === 'BUY' ? '#00C896' : type === 'SELL' ? '#FF4455' : '#F5A623'

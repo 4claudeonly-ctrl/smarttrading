@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { TopBar, LiveDot } from '../components/TopBar'
 import SignalCard from '../components/SignalCard'
-import { getLatestSignals, getActiveMacroEvents, getMarketData } from '../lib/api'
+import { getLatestSignals, getActiveMacroEvents } from '../lib/api'
+
+const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 const severityStyle = {
   HIGH:   { bg: '#2E0A0D', border: '#FF4455', color: '#FF4455', text: '#C47A7E' },
@@ -9,6 +12,20 @@ const severityStyle = {
   LOW:    { bg: '#0A1E14', border: '#00C896', color: '#00C896', text: '#7AC4A8' },
 }
 
+async function fetchMarketData() {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/get-market-data`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
+    body: JSON.stringify({}),
+  })
+  const json = await res.json()
+  return json.success ? json.data : null
+}
+
+function fmt(val, decimals = 2) {
+  if (val == null) return '–'
+  return typeof val === 'number' ? val.toFixed(decimals) : val
+}
 function fmtChg(pct) {
   if (pct == null) return '–'
   return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`
@@ -29,7 +46,7 @@ export default function HomeScreen() {
       setSignals(sigs); setMacroEvents(events)
     }).finally(() => setLoading(false))
 
-    getMarketData()
+    fetchMarketData()
       .then(d => setMarket(d))
       .catch(() => {})
       .finally(() => setMktLoading(false))
