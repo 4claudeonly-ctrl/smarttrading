@@ -1,6 +1,36 @@
 import { supabase } from './supabase'
 
 const MIN_CONFIDENCE = 70
+const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+// ── Edge Function: Market Data (public, no auth needed) ───────
+export async function getMarketData() {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/get-market-data`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json()
+  if (!json.success) throw new Error(json.error ?? 'get-market-data failed')
+  return json.data
+}
+
+// ── Edge Function: Analyze Ticker (requires anon key) ─────────
+export async function callAnalyzeTicker(ticker) {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/analyze-ticker`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON}`,
+    },
+    body: JSON.stringify({ ticker }),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json()
+  if (!json.success) throw new Error(json.error ?? 'analyze-ticker failed')
+  return json.data
+}
 
 // ── Signals ──────────────────────────────────────────────────
 // v2.0: gunakan v_latest_signals_v2 (include phase + macro_flag)

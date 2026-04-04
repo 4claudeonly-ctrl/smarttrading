@@ -1,0 +1,66 @@
+name: Goreng Detector — Pump & Dump Scanner
+
+on:
+  schedule:
+    # Setiap 30 menit saat jam bursa (09:00-16:00 WIB = 02:00-09:00 UTC)
+    - cron: '*/30 2-9 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Ticker spesifik (pisah koma, kosongkan = scan semua watchlist)'
+        required: false
+        default: ''
+
+jobs:
+  scan-goreng:
+    name: Scan Goreng Detector
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Goreng Detector
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          TICKER_OVERRIDE:      ${{ inputs.tickers }}
+        run: |
+          python - <<'PYEOF'
+          import os, sys, logging
+          logging.basicConfig(level=logging.INFO,
+              format="%(asctime)s [%(levelname)s] %(message)s")
+
+          from supabase import create_client
+          sys.path.insert(0, os.getcwd())
+          from goreng_detector import run_goreng_scan, GORENG_WATCHLIST
+
+          sb = create_client(os.environ["SUPABASE_URL"],
+                             os.environ["SUPABASE_SERVICE_KEY"])
+
+          override = os.environ.get("TICKER_OVERRIDE", "").strip()
+          tickers  = [t.strip().upper() for t in override.split(",") if t.strip()] \
+                     if override else None
+
+          n = run_goreng_scan(sb, tickers)
+          print(f"Goreng scan selesai: {n} alert ditulis.")
+          PYEOF
+
+      - name: Upload scan log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: goreng-log-${{ github.run_id }}
+          path: "*.log"
+          retention-days: 7
+          if-no-files-found: ignore

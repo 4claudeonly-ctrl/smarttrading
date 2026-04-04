@@ -32,7 +32,7 @@ from zoneinfo import ZoneInfo
 
 import yfinance as yf
 import pandas as pd
-import pandas_ta as ta
+# pandas_ta dihapus — pakai pure pandas TA di calculate_indicators()
 import requests
 from supabase import create_client, Client
 
@@ -128,45 +128,72 @@ def fetch_ohlcv(ticker: str) -> pd.DataFrame | None:
         return None
 
 
+def _ema_series(series: pd.Series, period: int) -> pd.Series:
+    """EMA menggunakan pandas ewm — pengganti pandas_ta."""
+    return series.ewm(span=period, adjust=False).mean()
+
 def calculate_indicators(df: pd.DataFrame) -> dict:
     """
-    Hitung 6 indikator teknikal menggunakan pandas-ta.
-    Return dict dengan nilai indikator terbaru (baris terakhir).
+    Hitung indikator teknikal menggunakan pure pandas (tanpa pandas_ta).
+    Compatible dengan Python 3.11 di GitHub Actions Linux.
     """
-    # RSI (14 hari) — momentum overbought/oversold
-    df.ta.rsi(length=14, append=True)
+    close  = df["close"].astype(float)
+    volume = df["volume"].astype(float)
 
-    # MACD (12,26,9) — trend momentum
-    df.ta.macd(fast=12, slow=26, signal=9, append=True)
+    # ── RSI (14) — Wilder's smoothing via EMA ──────────────────
+    delta = close.diff()
+    gain  = delta.clip(lower=0)
+    loss  = (-delta).clip(lower=0)
+    avg_gain = gain.ewm(com=13, adjust=False).mean()
+    avg_loss = loss.ewm(com=13, adjust=False).mean()
+    rs  = avg_gain / avg_loss.replace(0, float("nan"))
+    rsi = 100 - (100 / (1 + rs))
 
-    # EMA 20 + EMA 50 — trend direction
-    df.ta.ema(length=20, append=True)
-    df.ta.ema(length=50, append=True)
+    # ── MACD (12, 26, 9) ────────────────────────────────────────
+    ema12       = _ema_series(close, 12)
+    ema26       = _ema_series(close, 26)
+    macd_line   = ema12 - ema26
+    macd_signal = _ema_series(macd_line, 9)
+    macd_hist   = macd_line - macd_signal
 
-    # Bollinger Bands (20,2) — volatility + mean reversion
-    df.ta.bbands(length=20, std=2, append=True)
+    # ── EMA 20 + EMA 50 ─────────────────────────────────────────
+    ema20 = _ema_series(close, 20)
+    ema50 = _ema_series(close, 50)
 
-    # Volume ratio: volume hari ini vs rata-rata 20 hari
-    df["vol_ratio"] = df["volume"] / df["volume"].rolling(20).mean()
+    # ── Bollinger Bands (20, 2) ──────────────────────────────────
+    bb_mid   = close.rolling(20).mean()
+    bb_std   = close.rolling(20).std(ddof=0)
+    bb_upper = bb_mid + 2 * bb_std
+    bb_lower = bb_mid - 2 * bb_std
 
-    latest = df.iloc[-1]
-    prev   = df.iloc[-2]
+    # ── Volume ratio (hari ini vs 20d avg) ───────────────────────
+    vol_ratio = volume / volume.rolling(20).mean()
+
+    latest = df.index[-1]
+    prev   = df.index[-2]
+
+    def safe(series, idx, default=0.0):
+        try:
+            v = series.loc[idx]
+            return round(float(v), 4) if not pd.isna(v) else default
+        except Exception:
+            return default
 
     return {
-        "rsi":          round(float(latest.get("RSI_14", 50)), 2),
-        "macd":         round(float(latest.get("MACD_12_26_9", 0)), 4),
-        "macd_signal":  round(float(latest.get("MACDs_12_26_9", 0)), 4),
-        "macd_hist":    round(float(latest.get("MACDh_12_26_9", 0)), 4),
-        "ema20":        round(float(latest.get("EMA_20", 0)), 2),
-        "ema50":        round(float(latest.get("EMA_50", 0)), 2),
-        "bb_upper":     round(float(latest.get("BBU_20_2.0", 0)), 2),
-        "bb_lower":     round(float(latest.get("BBL_20_2.0", 0)), 2),
-        "bb_mid":       round(float(latest.get("BBM_20_2.0", 0)), 2),
-        "vol_ratio":    round(float(latest.get("vol_ratio", 1)), 2),
-        "close":        round(float(latest["close"]), 2),
-        "prev_close":   round(float(prev["close"]), 2),
+        "rsi":          safe(rsi,        latest, 50.0),
+        "macd":         safe(macd_line,  latest, 0.0),
+        "macd_signal":  safe(macd_signal,latest, 0.0),
+        "macd_hist":    safe(macd_hist,  latest, 0.0),
+        "ema20":        safe(ema20,      latest, 0.0),
+        "ema50":        safe(ema50,      latest, 0.0),
+        "bb_upper":     safe(bb_upper,   latest, 0.0),
+        "bb_lower":     safe(bb_lower,   latest, 0.0),
+        "bb_mid":       safe(bb_mid,     latest, 0.0),
+        "vol_ratio":    safe(vol_ratio,  latest, 1.0),
+        "close":        safe(close,      latest, 0.0),
+        "prev_close":   safe(close,      prev,   0.0),
         "price_change_pct": round(
-            (float(latest["close"]) - float(prev["close"])) / float(prev["close"]) * 100, 2
+            (safe(close, latest) - safe(close, prev)) / max(safe(close, prev), 0.01) * 100, 2
         ),
     }
 
