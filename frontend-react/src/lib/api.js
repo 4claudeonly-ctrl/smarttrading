@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 
-const MIN_CONFIDENCE = 70
+const MIN_CONFIDENCE = 50  // FIX: was 70, signals saat ini 55-65
 const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
 
@@ -8,7 +8,10 @@ const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
 export async function getMarketData() {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/get-market-data`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON,  // FIX: Supabase butuh apikey header
+    },
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const json = await res.json()
@@ -23,6 +26,7 @@ export async function callAnalyzeTicker(ticker) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${SUPABASE_ANON}`,
+      'apikey': SUPABASE_ANON,
     },
     body: JSON.stringify({ ticker }),
   })
@@ -33,34 +37,23 @@ export async function callAnalyzeTicker(ticker) {
 }
 
 // ── Signals ──────────────────────────────────────────────────
-// v2.0: gunakan v_latest_signals_v2 (include phase + macro_flag)
+// FIX: query langsung ke tabel signals, skip view yang punya hard filter confidence>=70
 export async function getLatestSignals(limit = 20) {
   const { data, error } = await supabase
-    .from('v_latest_signals_v2')
-    .select('*')
+    .from('signals')
+    .select('ticker, signal_type, confidence, price_at_signal, price_low, price_high, verdict_text, indicators, timeframe, created_at, expires_at, phase, cacing_score, macro_flag, fomo_penalty')
     .gte('confidence', MIN_CONFIDENCE)
     .order('confidence', { ascending: false })
     .limit(limit)
-  // Fallback ke view v1 jika v2 belum ada (belum apply schema additions)
-  if (error) {
-    const { data: d2, error: e2 } = await supabase
-      .from('v_latest_signals')
-      .select('*')
-      .gte('confidence', MIN_CONFIDENCE)
-      .order('confidence', { ascending: false })
-      .limit(limit)
-    if (e2) throw e2
-    return d2
-  }
+  if (error) throw error
   return data
 }
 
 export async function getSignalsByTicker(ticker) {
   const { data, error } = await supabase
     .from('signals')
-    .select('*, phase, cacing_score, macro_flag, fomo_penalty')
+    .select('ticker, signal_type, confidence, price_at_signal, price_low, price_high, verdict_text, indicators, created_at, expires_at, phase, cacing_score, macro_flag, fomo_penalty')
     .eq('ticker', ticker)
-    .gte('confidence', MIN_CONFIDENCE)
     .order('created_at', { ascending: false })
     .limit(10)
   if (error) throw error
@@ -104,7 +97,7 @@ export async function getGlobalNews(limit = 10) {
   return data
 }
 
-// ── Watchlist ────────────────────────────────────────────────
+// ── Watchlist & Portfolio ─────────────────────────────────────
 export async function getWatchlist(userId) {
   const { data, error } = await supabase
     .from('watchlist')
@@ -114,7 +107,6 @@ export async function getWatchlist(userId) {
   return data
 }
 
-// ── Portfolio ────────────────────────────────────────────────
 export async function getPortfolio(userId) {
   const { data, error } = await supabase
     .from('portfolio')
@@ -130,7 +122,7 @@ export async function getAccuracy() {
   const { data, error } = await supabase
     .from('v_signal_accuracy_30d')
     .select('*')
-  if (error) throw error
+  if (error) return []
   return data
 }
 
@@ -140,7 +132,7 @@ export async function getSignalHistory(limit = 30) {
     .select('*')
     .order('created_at', { ascending: false })
     .limit(limit)
-  if (error) throw error
+  if (error) return []
   return data
 }
 
@@ -161,11 +153,11 @@ export async function getActiveMacroEvents() {
     .from('v_active_macro_events')
     .select('*')
     .limit(5)
-  if (error) return []   // tabel belum ada = kembalikan kosong (graceful)
+  if (error) return []
   return data
 }
 
-// ── [v2.0] Phase History ──────────────────────────────────────
+// ── [v2.0] Phase & Broker ─────────────────────────────────────
 export async function getPhaseForTicker(ticker) {
   const { data, error } = await supabase
     .from('phase_history')
@@ -178,7 +170,6 @@ export async function getPhaseForTicker(ticker) {
   return data
 }
 
-// ── [v2.0] Broker Flow ────────────────────────────────────────
 export async function getBrokerFlowRecent() {
   const { data, error } = await supabase
     .from('v_broker_flow_recent')
