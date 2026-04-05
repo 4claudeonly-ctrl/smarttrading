@@ -17,10 +17,14 @@ function getSessionId() {
 
 async function apiFetch(action, body = {}) {
   const sid = getSessionId()
+  const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
   const url = `${SUPABASE_URL}/functions/v1/manage-alerts?action=${action}`
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': ANON,
+    },
     body: JSON.stringify({ session_id: sid, ...body }),
   })
   const json = await res.json()
@@ -113,7 +117,7 @@ export default function AlertScreen() {
               <div style={{ flex: 1, padding: '11px 12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 500 }}>{s.emiten_name}</div>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{s.emiten_meta?.name ?? s.ticker}</div>
                     <div style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'var(--mono)' }}>{s.ticker}</div>
                   </div>
                   <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4,
