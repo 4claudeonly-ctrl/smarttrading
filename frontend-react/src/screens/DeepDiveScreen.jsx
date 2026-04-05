@@ -66,7 +66,7 @@ export default function DeepDiveScreen() {
     if (!ticker) return
     setLoading(true); setError(null); setData(null); setNews([])
     try {
-      const result = await analyzeTicker(ticker)
+      const result = await callAnalyzeTicker(ticker)
       setData(result)
       navigate(`/deepdive/${ticker}`, { replace: true })
       getNewsByTicker(ticker).then(setNews).catch(() => {})

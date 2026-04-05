@@ -41,7 +41,7 @@ export async function callAnalyzeTicker(ticker) {
 export async function getLatestSignals(limit = 20) {
   const { data, error } = await supabase
     .from('signals')
-    .select('ticker, signal_type, confidence, price_at_signal, price_low, price_high, verdict_text, indicators, timeframe, created_at, expires_at, phase, cacing_score, macro_flag, fomo_penalty')
+    .select('id, ticker, signal_type, confidence, price_at_signal, price_low, price_high, verdict_text, indicators, timeframe, created_at, expires_at, phase, cacing_score, macro_flag, fomo_penalty, emiten_meta(name, sector)')
     .gte('confidence', MIN_CONFIDENCE)
     .order('confidence', { ascending: false })
     .limit(limit)
@@ -52,7 +52,7 @@ export async function getLatestSignals(limit = 20) {
 export async function getSignalsByTicker(ticker) {
   const { data, error } = await supabase
     .from('signals')
-    .select('ticker, signal_type, confidence, price_at_signal, price_low, price_high, verdict_text, indicators, created_at, expires_at, phase, cacing_score, macro_flag, fomo_penalty')
+    .select('id, ticker, signal_type, confidence, price_at_signal, price_low, price_high, verdict_text, indicators, created_at, expires_at, phase, cacing_score, macro_flag, fomo_penalty, emiten_meta(name, sector)')
     .eq('ticker', ticker)
     .order('created_at', { ascending: false })
     .limit(10)

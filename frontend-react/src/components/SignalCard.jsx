@@ -54,10 +54,11 @@ const MacroBadge = ({ macro_flag }) => {
 export default function SignalCard({ signal }) {
   const navigate = useNavigate()
   const {
-    ticker, emiten_name, signal_type, confidence,
+    ticker, emiten_meta, signal_type, confidence,
     price_at_signal, verdict_text,
     phase, cacing_score, macro_flag, fomo_penalty,
   } = signal
+  const emiten_name = emiten_meta?.name ?? ticker
   const chgPct = ((Math.random() - 0.3) * 3).toFixed(2) // placeholder
   const color  = sigColor(signal_type)
 
