@@ -27,6 +27,43 @@ function ConfidenceBar({ value }) {
   )
 }
 
+// Deteksi apakah pasar BEI sedang buka
+function isMarketOpen() {
+  // WIB = UTC+7
+  const now = new Date()
+  const wib = new Date(now.getTime() + 7 * 3600 * 1000)
+  const day = wib.getUTCDay() // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+  const hour = wib.getUTCHours()
+  const min  = wib.getUTCMinutes()
+  const timeMin = hour * 60 + min
+  // Bursa buka Senin-Jumat 09:00-15:45 WIB
+  if (day === 0 || day === 6) return false
+  return timeMin >= 540 && timeMin <= 945
+}
+
+function MarketStatusBanner({ dataDate }) {
+  const open = isMarketOpen()
+  if (open) return null // saat buka tidak perlu banner
+  // Format dataDate jadi lebih readable
+  const d = dataDate ? new Date(dataDate) : null
+  const label = d ? d.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : dataDate
+  return (
+    <div style={{ margin: '10px 16px 0', padding: '10px 12px', background: '#1A1500',
+      border: '1px solid #F5A623', borderRadius: 8, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+      <span style={{ fontSize: 16 }}>🌙</span>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#F5A623', marginBottom: 2 }}>
+          Pasar BEI Sedang Tutup
+        </div>
+        <div style={{ fontSize: 10, color: '#C4967A', lineHeight: 1.6 }}>
+          Data yang ditampilkan adalah harga penutupan terakhir: <strong style={{color:'#F5A623'}}>{label}</strong>.
+          Harga akan diperbarui otomatis saat bursa buka kembali (Senin 09:00 WIB).
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Parse verdict 5-section dari Groq
 function parseVerdict(text) {
   if (!text) return null
@@ -140,6 +177,9 @@ export default function DeepDiveScreen() {
         </div>
       )}
 
+      {/* Market Status Banner */}
+      <MarketStatusBanner dataDate={data?.data_date} />
+
       {/* Result */}
       {data && !loading && (
         <div style={{ padding: '12px 16px' }}>
@@ -218,8 +258,11 @@ export default function DeepDiveScreen() {
           <div style={{ margin: '0 0 12px', padding: '8px 12px', background: '#0B0D12',
             borderRadius: 6, border: '1px solid #252D3D' }}>
             <div style={{ fontSize: 10, color: 'var(--muted)', lineHeight: 1.6 }}>
-              ℹ️ Analisis ini hanya untuk referensi. Eksekusi di platform broker Anda (Ajaib, Stockbit, Mirae, dll).
-              Data per: {data.data_date}
+              ℹ️ Analisis hanya untuk referensi. Eksekusi di broker Anda (Ajaib, Stockbit, Mirae, dll).
+              <br/>
+              <span style={{ color: '#F5A623' }}>
+                Data harga per: {data.data_date} · {isMarketOpen() ? '🟢 Pasar Buka' : '🌙 Pasar Tutup'}
+              </span>
             </div>
           </div>
 

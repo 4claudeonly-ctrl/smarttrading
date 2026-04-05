@@ -14,6 +14,15 @@ function fmtChg(pct) {
   return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`
 }
 
+function isMarketOpen() {
+  const now = new Date()
+  const wib = new Date(now.getTime() + 7 * 3600 * 1000)
+  const day = wib.getUTCDay()
+  const timeMin = wib.getUTCHours() * 60 + wib.getUTCMinutes()
+  if (day === 0 || day === 6) return false
+  return timeMin >= 540 && timeMin <= 945
+}
+
 export default function HomeScreen() {
   const [signals,     setSignals]     = useState([])
   const [macroEvents, setMacroEvents] = useState([])
@@ -69,6 +78,19 @@ export default function HomeScreen() {
   return (
     <div style={{ paddingBottom: 80 }}>
       <TopBar right={<><LiveDot />Live</>} />
+
+      {/* ── Market Status Banner (pasar tutup) ── */}
+      {!isMarketOpen() && (
+        <div style={{ background: '#1A1500', borderLeft: '3px solid #F5A623',
+          margin: '8px 12px 0', padding: '8px 12px', borderRadius: 8,
+          display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 14 }}>🌙</span>
+          <div style={{ fontSize: 10, color: '#C4967A', lineHeight: 1.5 }}>
+            <strong style={{ color: '#F5A623' }}>Pasar BEI tutup.</strong>
+            {' '}Data & sinyal adalah harga penutupan terakhir. Diperbarui saat bursa buka (Senin 09:00 WIB).
+          </div>
+        </div>
+      )}
 
       {/* ── Defense Banner ── */}
       {showDefense && !macroEvents.length && (
