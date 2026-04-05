@@ -493,9 +493,12 @@ def run_signal_engine():
     log.info("=== Signal Engine START === [v2.0 — 4-komponen scoring]")
     log.info(f"Modul status: {log_pre}")
 
-    if not is_market_open():
-        log.info("Pasar BEI tutup — engine tidak dijalankan.")
+    force_run = os.environ.get("FORCE_RUN", "false").lower() == "true"
+    if not is_market_open() and not force_run:
+        log.info("Pasar BEI tutup — engine tidak dijalankan. (Set FORCE_RUN=true untuk override)")
         return
+    if force_run and not is_market_open():
+        log.info("FORCE_RUN=true — menjalankan engine di luar jam bursa (manual trigger)")
 
     tickers = get_active_tickers()
     log.info(f"Memproses {len(tickers)} ticker...")

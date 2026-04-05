@@ -29,6 +29,11 @@ on:
         type: boolean
         required: false
         default: false
+      force_run:
+        description: "Force run meski pasar tutup (untuk testing manual)"
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   run-signal-engine:
@@ -60,6 +65,7 @@ jobs:
           GROQ_API_KEY:         ${{ secrets.GROQ_API_KEY }}
           TICKER_OVERRIDE:      ${{ inputs.ticker_override }}
           DRY_RUN:              ${{ inputs.dry_run }}
+          FORCE_RUN:            ${{ inputs.force_run }}
         run: python signal_engine.py
 
       # ── 5. Upload log sebagai artifact (3 hari retensi) ───
