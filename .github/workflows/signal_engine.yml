@@ -35,6 +35,10 @@ on:
         required: false
         default: false
 
+concurrency:
+  group: signal-engine          # hanya 1 instance jalan sekaligus
+  cancel-in-progress: false     # jangan cancel yang sedang jalan — biarkan selesai
+
 jobs:
   run-signal-engine:
     name: "Run Signal Engine"

@@ -20,6 +20,10 @@ on:
         required: false
         default: ""
 
+concurrency:
+  group: news-fetcher
+  cancel-in-progress: false
+
 jobs:
   fetch-news:
     name: "Fetch & Cache News"

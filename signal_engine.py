@@ -69,7 +69,7 @@ GROQ_API_URL      = "https://api.groq.com/openai/v1/chat/completions"
 
 IDX_TZ            = ZoneInfo("Asia/Jakarta")
 MIN_CONFIDENCE    = 50.0          # Turun dari 70 — kondisi pasar bearish, sinyal 55-65% tetap valid
-SIGNAL_TTL_HOURS  = 4             # signal kadaluarsa setelah 4 jam
+SIGNAL_TTL_HOURS  = 24            # signal valid 24 jam — cukup untuk satu sesi bursa penuh
 OHLCV_DAYS        = 60            # ambil 60 hari data historis
 MAX_TICKERS_RUN   = 50            # batasi per run agar tidak timeout GitHub Actions
 RATE_LIMIT_SLEEP  = 0.5           # detik jeda antar ticker (hindari rate limit yfinance)
