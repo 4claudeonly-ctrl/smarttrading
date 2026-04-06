@@ -68,7 +68,7 @@ GROQ_MODEL        = "llama-3.3-70b-versatile"
 GROQ_API_URL      = "https://api.groq.com/openai/v1/chat/completions"
 
 IDX_TZ            = ZoneInfo("Asia/Jakarta")
-MIN_CONFIDENCE    = 70.0          # NFR-008: threshold minimum
+MIN_CONFIDENCE    = 50.0          # Turun dari 70 — kondisi pasar bearish, sinyal 55-65% tetap valid
 SIGNAL_TTL_HOURS  = 4             # signal kadaluarsa setelah 4 jam
 OHLCV_DAYS        = 60            # ambil 60 hari data historis
 MAX_TICKERS_RUN   = 50            # batasi per run agar tidak timeout GitHub Actions
@@ -475,7 +475,8 @@ def write_signal_to_db(
         "fomo_penalty":    _fomo_penalty,
     }
     try:
-        supabase.table("signals").insert(payload).execute()
+        # Upsert — overwrite sinyal lama per ticker (UNIQUE constraint signals_ticker_unique)
+        supabase.table("signals").upsert(payload, on_conflict="ticker").execute()
         return True
     except Exception as e:
         log.error(f"Gagal insert signal {ticker}: {e}")
