@@ -121,7 +121,10 @@ def fetch_ohlcv(ticker: str) -> pd.DataFrame | None:
         if df.empty or len(df) < 20:
             log.warning(f"Data tidak cukup untuk {ticker}: {len(df)} baris")
             return None
-        df.columns = [c.lower() for c in df.columns]
+        # Fix yfinance MultiIndex columns — ambil level pertama saja
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
+        df.columns = [str(c).lower() for c in df.columns]
         return df
     except Exception as e:
         log.error(f"Gagal fetch {ticker}: {e}")
